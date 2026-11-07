@@ -42,4 +42,8 @@ ar:{navServices:"خدماتنا",navAbout:"من نحن",navProcess:"كيف نع�
 };
 const lang=document.getElementById('lang');function setLang(l){const d=dict[l]||dict.en;document.documentElement.lang=l;document.documentElement.dir=l==='ar'?'rtl':'ltr';document.querySelectorAll('[data-i]').forEach(e=>{const k=e.dataset.i;if(d[k])e.textContent=d[k]});document.querySelectorAll('[data-html]').forEach(e=>{const k=e.dataset.html;if(d[k])e.innerHTML=d[k]});lang.value=l;document.title=l==='ar'?'Ahlamy | حلول الذكاء الاصطناعي والخدمات الرقمية':l==='fr'?'Ahlamy | Solutions IA et numériques':'Ahlamy | AI & Digital Solutions'}lang.addEventListener('change',e=>setLang(e.target.value));document.getElementById('menu').addEventListener('click',()=>document.getElementById('nav').classList.toggle('open'));document.querySelectorAll('nav a').forEach(a=>a.addEventListener('click',()=>document.getElementById('nav').classList.remove('open')));document.getElementById('year').textContent=new Date().getFullYear();setLang('en');
 </script>
+  
+<script src="https://cdn.botpress.cloud/webchat/v5.0/inject.js"></script>
+<script src="https://files.bpcontent.cloud/2026/11/07/11/20261107115433-IIF6WPGH.js" defer></script>
+
 </body></html>
