@@ -1,93 +1,457 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#101827">
-  <title>Ahlamy Universal AI</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #101827;
-      color: #f8fafc;
-      min-height: 100vh;
-    }
-    header {
-      padding: 22px 7%;
-      border-bottom: 1px solid #29364a;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .logo { font-size: 24px; font-weight: bold; color: #7dd3fc; }
-    main {
-      max-width: 850px;
-      margin: 75px auto;
-      padding: 25px;
-      text-align: center;
-    }
-    h1 { font-size: clamp(32px, 6vw, 54px); margin-bottom: 18px; }
-    p { color: #bdc9d8; line-height: 1.7; }
-    .tag {
-      color: #7dd3fc;
-      letter-spacing: 2px;
-      font-size: 13px;
-      font-weight: bold;
-    }
-    .services {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-      gap: 15px;
-      margin-top: 40px;
-      text-align: left;
-    }
-    .service {
-      padding: 22px;
-      border: 1px solid #34445b;
-      border-radius: 14px;
-      background: #182538;
-    }
-    .service h2 { font-size: 18px; color: #7dd3fc; }
-    footer { text-align: center; color: #8291a5; padding: 30px; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101827">
+<title>Ahlamy Universal AI</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:#101827;
+  color:#f8fafc;
+  font-family:Arial,sans-serif;
+  min-height:100vh;
+}
+header{
+  padding:20px 7%;
+  border-bottom:1px solid #29364a;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.logo{font-size:25px;font-weight:bold;color:#7dd3fc}
+main{max-width:620px;margin:50px auto;padding:20px}
+h1{font-size:32px}
+p{color:#bdc9d8;line-height:1.6}
+.panel{
+  background:#182538;
+  border:1px solid #34445b;
+  border-radius:16px;
+  padding:25px;
+  margin-top:20px;
+}
+label{display:block;margin:15px 0 7px}
+input,select{
+  width:100%;
+  padding:13px;
+  border-radius:9px;
+  border:1px solid #43536a;
+  background:#101827;
+  color:white;
+  font-size:15px;
+}
+button{
+  width:100%;
+  padding:14px;
+  margin-top:18px;
+  border:0;
+  border-radius:9px;
+  background:#38bdf8;
+  color:#102033;
+  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
+}
+button:disabled{opacity:.5}
+.secondary{background:#293b52;color:white}
+.hidden{display:none!important}
+.status{
+  padding:13px;
+  border-radius:9px;
+  background:#24364b;
+  color:#dbeafe;
+  margin-top:15px;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+}
+.small{text-align:center;font-size:13px;color:#94a3b8}
+a{color:#7dd3fc;cursor:pointer}
+footer{text-align:center;color:#8291a5;padding:30px}
+</style>
 </head>
+
 <body>
-  <header>
-    <div class="logo">AHLAMY</div>
-    <span>Universal AI Platform</span>
-  </header>
 
-  <main>
-    <div class="tag">AI-FIRST BUSINESS PLATFORM</div>
-    <h1>One intelligent platform.<br>Unlimited possibilities.</h1>
-    <p>
-      Ahlamy Universal AI helps businesses worldwide automate
-      customer interactions, manage services and build smarter
-      customer experiences.
+<header>
+  <div class="logo">AHLAMY</div>
+  <span>Universal AI Platform</span>
+</header>
+
+<main>
+
+<section id="authPanel" class="panel">
+  <h1>Welcome to Ahlamy</h1>
+  <p>One intelligent platform for businesses worldwide.</p>
+
+  <div id="loginForm">
+    <h2>Sign in</h2>
+
+    <label>Email address</label>
+    <input id="loginEmail" type="email" autocomplete="email">
+
+    <label>Password</label>
+    <input id="loginPassword" type="password" autocomplete="current-password">
+
+    <button id="loginBtn">Sign in</button>
+
+    <p class="small">
+      New to Ahlamy?
+      <a id="showSignup">Create an account</a>
     </p>
+  </div>
 
-    <section class="services">
-      <article class="service">
-        <h2>Ahlamy AI</h2>
-        <p>AI assistants and customer support automation.</p>
-      </article>
-      <article class="service">
-        <h2>Ahlamy Digital</h2>
-        <p>Websites, digital experiences and creative solutions.</p>
-      </article>
-      <article class="service">
-        <h2>Ahlamy Commerce</h2>
-        <p>Tools for products, services and online commerce.</p>
-      </article>
-      <article class="service">
-        <h2>Ahlamy Business</h2>
-        <p>Business insights and international opportunities.</p>
-      </article>
-    </section>
-  </main>
+  <div id="signupForm" class="hidden">
+    <h2>Create an account</h2>
 
-  <footer>© 2026 Ahlamy. All rights reserved.</footer>
+    <label>Full name</label>
+    <input id="fullName" autocomplete="name">
+
+    <label>Email address</label>
+    <input id="signupEmail" type="email" autocomplete="email">
+
+    <label>Password (minimum 8 characters)</label>
+    <input id="signupPassword" type="password" autocomplete="new-password">
+
+    <button id="signupBtn">Create account</button>
+
+    <p class="small">
+      Already registered?
+      <a id="showLogin">Sign in</a>
+    </p>
+  </div>
+
+  <div id="authStatus" class="status hidden" role="status"></div>
+</section>
+
+<section id="companyPanel" class="panel hidden">
+  <h1>Set up your company</h1>
+  <p>Create your company's private workspace.</p>
+
+  <label>Company name</label>
+  <input id="companyName" placeholder="Your company name">
+
+  <label>Country</label>
+  <input id="country" placeholder="e.g. France">
+
+  <label>Industry</label>
+  <select id="industry">
+    <option value="">Select industry</option>
+    <option>Real Estate</option>
+    <option>E-commerce</option>
+    <option>Technology / SaaS</option>
+    <option>Education</option>
+    <option>Tourism / Hotels</option>
+    <option>Marketing</option>
+    <option>Healthcare</option>
+    <option>Manufacturing</option>
+    <option>Other</option>
+  </select>
+
+  <label>Preferred language</label>
+  <select id="language">
+    <option value="en">English</option>
+    <option value="fr">French</option>
+    <option value="ar">Arabic</option>
+  </select>
+
+  <button id="createCompanyBtn">Create my company</button>
+  <div id="companyStatus" class="status hidden" role="status"></div>
+</section>
+
+<section id="dashboard" class="panel hidden">
+  <h1 id="welcomeTitle">Your workspace</h1>
+  <p>Your company workspace is connected to Ahlamy.</p>
+  <div id="companyDetails" class="status"></div>
+  <button id="logoutBtn" class="secondary">Sign out</button>
+</section>
+
+</main>
+
+<footer>© 2026 Ahlamy. All rights reserved.</footer>
+
+<script type="module">
+
+import { createClient } from
+'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+const SUPABASE_URL =
+'https://ucrzvevcrsnakwfcimdn.supabase.co';
+
+const SUPABASE_KEY =
+'sb_publishable_T0VEJa4zxZzXNh2yUsDUVQ_CHRITxda';
+
+const supabase = createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+const $ = id => document.getElementById(id);
+
+function showMessage(id, text) {
+  $(id).textContent = text;
+  $(id).classList.remove('hidden');
+}
+
+function hideSections() {
+  ['authPanel','companyPanel','dashboard'].forEach(id => {
+    $(id).classList.add('hidden');
+  });
+}
+
+function showAuth(message) {
+  hideSections();
+  $('authPanel').classList.remove('hidden');
+
+  if (message) {
+    showMessage('authStatus', message);
+  }
+}
+
+function showCompany() {
+  hideSections();
+  $('companyPanel').classList.remove('hidden');
+}
+
+function showDashboard(tenant) {
+  hideSections();
+  $('dashboard').classList.remove('hidden');
+
+  $('welcomeTitle').textContent = tenant.name;
+
+  $('companyDetails').textContent =
+    'Company: ' + tenant.name +
+    '\nCountry: ' + (tenant.country || '-') +
+    '\nIndustry: ' + (tenant.industry || '-') +
+    '\nLanguage: ' + (tenant.preferred_language || '-') +
+    '\nStatus: ' + (tenant.status || '-');
+}
+
+async function routeUser(user) {
+
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('tenant_id')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (error) {
+    showAuth('Profile error: ' + error.message);
+    return;
+  }
+
+  if (!profile || !profile.tenant_id) {
+    showCompany();
+    return;
+  }
+
+  const { data: tenant, error: tenantError } =
+    await supabase
+      .from('tenants')
+      .select('name,country,industry,preferred_language,status')
+      .eq('id', profile.tenant_id)
+      .single();
+
+  if (tenantError) {
+    showAuth('Company error: ' + tenantError.message);
+    return;
+  }
+
+  showDashboard(tenant);
+}
+
+// Switch to registration
+
+$('showSignup').addEventListener('click', () => {
+  $('loginForm').classList.add('hidden');
+  $('signupForm').classList.remove('hidden');
+  $('authStatus').classList.add('hidden');
+});
+
+$('showLogin').addEventListener('click', () => {
+  $('signupForm').classList.add('hidden');
+  $('loginForm').classList.remove('hidden');
+  $('authStatus').classList.add('hidden');
+});
+
+// Sign in
+
+$('loginBtn').addEventListener('click', async () => {
+
+  const email = $('loginEmail').value.trim();
+  const password = $('loginPassword').value;
+
+  if (!email || !password) {
+    showMessage('authStatus','Enter your email and password.');
+    return;
+  }
+
+  $('loginBtn').disabled = true;
+  $('loginBtn').textContent = 'Signing in...';
+
+  try {
+    const { data, error } = await supabase.auth
+      .signInWithPassword({ email, password });
+
+    if (error) throw error;
+
+    await routeUser(data.user);
+
+  } catch (error) {
+    showMessage('authStatus',error.message);
+  } finally {
+    $('loginBtn').disabled = false;
+    $('loginBtn').textContent = 'Sign in';
+  }
+});
+
+// Create account
+
+$('signupBtn').addEventListener('click', async () => {
+
+  const name = $('fullName').value.trim();
+  const email = $('signupEmail').value.trim();
+  const password = $('signupPassword').value;
+
+  if (!name || !email || password.length < 8) {
+    showMessage(
+      'authStatus',
+      'Enter your name, a valid email and a password of at least 8 characters.'
+    );
+    return;
+  }
+
+  $('signupBtn').disabled = true;
+  $('signupBtn').textContent = 'Creating account...';
+
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { full_name: name }
+      }
+    });
+
+    if (error) throw error;
+
+    if (data.session && data.user) {
+      await routeUser(data.user);
+    } else {
+      showMessage(
+        'authStatus',
+        'Account created. Please check your email to confirm your account, then sign in.'
+      );
+    }
+
+  } catch (error) {
+    showMessage('authStatus',error.message);
+  } finally {
+    $('signupBtn').disabled = false;
+    $('signupBtn').textContent = 'Create account';
+  }
+});
+
+// Create company using the existing secure database function
+
+$('createCompanyBtn').addEventListener('click', async () => {
+
+  const name = $('companyName').value.trim();
+  const country = $('country').value.trim();
+  const industry = $('industry').value;
+  const language = $('language').value;
+
+  if (!name) {
+    showMessage('companyStatus','Enter your company name.');
+    return;
+  }
+
+  $('createCompanyBtn').disabled = true;
+  $('createCompanyBtn').textContent = 'Creating company...';
+
+  try {
+
+    const { data: sessionData } =
+      await supabase.auth.getSession();
+
+    const user = sessionData.session?.user;
+
+    if (!user) {
+      throw new Error('Please sign in again.');
+    }
+
+    const { data, error } = await supabase.rpc(
+      'create_tenant_for_current_user',
+      {
+        p_name: name,
+        p_country: country || null,
+        p_industry: industry || null,
+        p_language: language,
+        p_full_name: user.user_metadata?.full_name || null
+      }
+    );
+
+    if (error) throw error;
+
+    if (!data) {
+      throw new Error('Company creation returned no ID.');
+    }
+
+    const { data: tenant, error: tenantError } =
+      await supabase
+        .from('tenants')
+        .select('name,country,industry,preferred_language,status')
+        .eq('id', data)
+        .single();
+
+    if (tenantError) throw tenantError;
+
+    showDashboard(tenant);
+
+  } catch (error) {
+    showMessage('companyStatus',error.message);
+  } finally {
+    $('createCompanyBtn').disabled = false;
+    $('createCompanyBtn').textContent = 'Create my company';
+  }
+});
+
+// Sign out
+
+$('logoutBtn').addEventListener('click', async () => {
+
+  const { error } = await supabase.auth.signOut();
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  showAuth();
+});
+
+// Restore existing login session
+
+async function startApp() {
+
+  const { data, error } = await supabase.auth.getSession();
+
+  if (error) {
+    showAuth(error.message);
+    return;
+  }
+
+  if (data.session?.user) {
+    await routeUser(data.session.user);
+  } else {
+    showAuth();
+  }
+}
+
+startApp();
+
+</script>
 </body>
 </html>
