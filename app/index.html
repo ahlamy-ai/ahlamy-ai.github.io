@@ -109,6 +109,7 @@ footer{text-align:center;color:#8291a5;padding:30px}
     <input id="loginPassword" type="password" autocomplete="current-password">
 
     <button id="loginBtn">Sign in</button>
+    <p class="small"><a id="forgotPassword">Forgot your password?</a></p>
 
     <p class="small">
       New to Ahlamy?
@@ -134,6 +135,13 @@ footer{text-align:center;color:#8291a5;padding:30px}
       Already registered?
       <a id="showLogin">Sign in</a>
     </p>
+  </div>
+
+  <div id="resetForm" class="hidden">
+    <h2>Reset your password</h2>
+    <label>New password (minimum 8 characters)</label>
+    <input id="newPassword" type="password" autocomplete="new-password">
+    <button id="saveNewPassword">Save new password</button>
   </div>
 
   <div id="authStatus" class="status hidden" role="status"></div>
@@ -356,6 +364,45 @@ $('showLogin').addEventListener('click', () => {
   $('signupForm').classList.add('hidden');
   $('loginForm').classList.remove('hidden');
   $('authStatus').classList.add('hidden');
+});
+
+// Password recovery
+
+$('forgotPassword').addEventListener('click', async () => {
+  const email = $('loginEmail').value.trim();
+  if (!email) {
+    showMessage('authStatus', 'Enter your account email first, then choose Forgot your password.');
+    return;
+  }
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + window.location.pathname + '?mode=reset'
+    });
+    if (error) throw error;
+    showMessage('authStatus', 'If an account exists for this email, a password reset link has been sent. Check your inbox and spam folder.');
+  } catch (error) {
+    showMessage('authStatus', error.message);
+  }
+});
+
+$('saveNewPassword').addEventListener('click', async () => {
+  const password = $('newPassword').value;
+  if (password.length < 8) {
+    showMessage('authStatus', 'Choose a password with at least 8 characters.');
+    return;
+  }
+  try {
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) throw error;
+    showMessage('authStatus', 'Password updated successfully. You can now sign in.');
+    $('resetForm').classList.add('hidden');
+    $('loginForm').classList.remove('hidden');
+    $('loginPassword').value = '';
+    $('newPassword').value = '';
+    window.history.replaceState({}, document.title, window.location.pathname);
+  } catch (error) {
+    showMessage('authStatus', error.message);
+  }
 });
 
 // Sign in
@@ -970,11 +1017,21 @@ async function startApp() {
     return;
   }
 
+  const mode = new URLSearchParams(window.location.search).get('mode');
+  if (mode === 'reset' && data.session?.user) {
+    $('loginForm').classList.add('hidden');
+    $('signupForm').classList.add('hidden');
+    $('resetForm').classList.remove('hidden');
+    $('authPanel').classList.remove('hidden');
+    $('companyPanel').classList.add('hidden');
+    $('dashboardPanel').classList.add('hidden');
+    return;
+  }
   if (data.session?.user) {
     await routeUser(data.session.user);
   } else {
     showAuth();
-    if (new URLSearchParams(window.location.search).get('mode') === 'signup') {
+    if (mode === 'signup') {
       $('loginForm').classList.add('hidden');
       $('signupForm').classList.remove('hidden');
     }
