@@ -172,7 +172,7 @@ footer{text-align:center;color:#8291a5;padding:30px}
       <h3>Basic — €39 / month</h3>
       <p>AI chatbot for small businesses.</p>
       <button id="subscribeBtn">Choose Basic</button>
-      <p class="small">Secure Paddle Sandbox checkout. No live payment is made in this test.</p>
+      <p class="small">Secure Paddle checkout. Review the final price and billing details before confirming payment.</p>
     </div>
     <div class="panel" style="margin-top:14px">
       <h3>Professional — $99 / month</h3>
@@ -468,7 +468,7 @@ async function loadSubscription() {
     (data.cancel_at_period_end ? '\nCancellation scheduled at period end.' : '');
 }
 
-// Create a Paddle Sandbox checkout using the signed-in user's session
+// Create a Paddle Live checkout using the signed-in user's session
 $('subscribeBtn').addEventListener('click', async () => {
   $('subscribeBtn').disabled = true;
   $('subscribeBtn').textContent = 'Preparing secure checkout...';
@@ -501,7 +501,7 @@ $('subscribeBtn').addEventListener('click', async () => {
     showMessage('billingStatus', error.message || 'Unable to start checkout.');
   } finally {
     $('subscribeBtn').disabled = false;
-    $('subscribeBtn').textContent = 'Subscribe to Basic — €39 / month';
+    $('subscribeBtn').textContent = 'Continue to secure checkout — €39 / month';
   }
 });
 
