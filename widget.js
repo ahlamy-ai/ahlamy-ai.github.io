@@ -54,6 +54,7 @@
   let polling = false;
   let waitingSince = 0;
   let lastRendered = "";
+  let welcomeMessage = "Hello! How can I help you today?";
 
   function line(sender, content) {
     const node = document.createElement("div");
@@ -83,8 +84,9 @@
     try {
       const data = await call("init");
       sessionToken = data.session_token;
+      welcomeMessage = data.welcome_message || welcomeMessage;
       messages.replaceChildren();
-      line("assistant", data.welcome_message || "Hello! How can I help you today?");
+      line("assistant", welcomeMessage);
       poll();
     } catch (error) {
       messages.replaceChildren();
@@ -101,7 +103,7 @@
       if (signature !== lastRendered) {
         lastRendered = signature;
         messages.replaceChildren();
-        if (!rows.length) line("assistant", "Hello! How can I help you today?");
+        if (!rows.length) line("assistant", welcomeMessage);
         rows.forEach(row => line(row.sender_type, row.content));
         if (waitingSince && !rows.some(row => row.sender_type === "assistant" && Date.parse(row.created_at) >= waitingSince)) {
           if (Date.now() - waitingSince > 45000) notice("Our team assistant is taking longer than usual. Your message has been saved.");
