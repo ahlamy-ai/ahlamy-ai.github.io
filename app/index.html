@@ -210,6 +210,19 @@ footer{text-align:center;color:#8291a5;padding:30px}
     <div id="aiTestTranscript" class="module-list" aria-live="polite"></div>
   </section>
 
+  <section class="panel" id="websiteWidgetPanel" style="margin-top:22px">
+    <h2>Your company website assistant</h2>
+    <p>A private assistant is created automatically for this company. Add your website origin, then copy the embed code into your website to show the chat button to visitors.</p>
+    <label for="widgetOrigins">Allowed website origin(s)</label>
+    <input id="widgetOrigins" placeholder="https://your-company.com">
+    <p class="small">Use the website origin only (no page path). Separate multiple websites with commas. HTTPS is required except localhost for testing.</p>
+    <button id="saveWidgetSettingsBtn" type="button">Save widget settings</button>
+    <div id="widgetSettingsStatus" class="status" role="status">Loading your private assistant…</div>
+    <label for="widgetEmbedCode">Website embed code</label>
+    <textarea id="widgetEmbedCode" rows="3" readonly style="width:100%;padding:12px;border-radius:9px;border:1px solid #43536a;background:#101827;color:white;font:13px monospace" placeholder="Save your website origin to generate the embed code."></textarea>
+    <button id="copyWidgetCodeBtn" type="button" class="secondary">Copy embed code</button>
+  </section>
+
   <section class="panel" id="workspaceModules" style="margin-top:22px">
     <h2>Business workspace</h2>
     <p>Manage your company's customers, services, branches, orders, bookings and AI knowledge base.</p>
@@ -295,6 +308,7 @@ function showDashboard(tenant, tenantId) {
 
   loadSubscription();
   initWorkspaceModules();
+  loadWidgetSettings();
 }
 
 async function routeUser(user) {
@@ -854,6 +868,71 @@ $('aiTestSendBtn').addEventListener('click', async () => {
   } finally {
     $('aiTestSendBtn').disabled = false;
     $('aiTestSendBtn').textContent = 'Send test message';
+  }
+});
+
+// Tenant-specific website assistant settings.
+let currentWidgetKey = null;
+
+function renderWidgetEmbed() {
+  const origins = $('widgetOrigins').value.split(',').map(value => value.trim()).filter(Boolean);
+  $('widgetEmbedCode').value = currentWidgetKey && origins.length
+    ? '<script src="https://ahlamy-ai.github.io/widget.js" data-widget-key="' + currentWidgetKey + '" defer></script>'
+    : '';
+}
+
+async function loadWidgetSettings() {
+  $('widgetSettingsStatus').textContent = 'Loading your private assistant…';
+  try {
+    const {data,error} = await supabase.functions.invoke('ahlamy-widget', {body:{action:'get_config'}});
+    if (error) throw error;
+    currentWidgetKey = data.public_key;
+    $('widgetOrigins').value = (data.allowed_origins || []).join(', ');
+    renderWidgetEmbed();
+    $('widgetSettingsStatus').textContent = data.enabled
+      ? 'Your company assistant is provisioned. Add your website origin and copy the embed code.'
+      : 'Your company assistant is currently disabled.';
+  } catch (error) {
+    $('widgetSettingsStatus').textContent = 'Could not load assistant settings: ' + (error.message || 'Unknown error');
+  }
+}
+
+$('widgetOrigins').addEventListener('input', renderWidgetEmbed);
+$('saveWidgetSettingsBtn').addEventListener('click', async () => {
+  const origins = $('widgetOrigins').value.split(',').map(value => value.trim()).filter(Boolean);
+  $('saveWidgetSettingsBtn').disabled = true;
+  $('widgetSettingsStatus').textContent = 'Saving website permissions…';
+  try {
+    const {data,error} = await supabase.functions.invoke('ahlamy-widget', {
+      body:{action:'configure',allowed_origins:origins}
+    });
+    if (error) throw error;
+    currentWidgetKey = data.public_key;
+    $('widgetOrigins').value = (data.allowed_origins || []).join(', ');
+    renderWidgetEmbed();
+    $('widgetSettingsStatus').textContent = origins.length
+      ? 'Saved. Copy the embed code and add it before the closing body tag on your website.'
+      : 'Saved. No website origins are allowed yet, so the public chat stays disabled.';
+  } catch (error) {
+    $('widgetSettingsStatus').textContent = 'Could not save widget settings: ' + (error.message || 'Unknown error');
+  } finally {
+    $('saveWidgetSettingsBtn').disabled = false;
+  }
+});
+
+$('copyWidgetCodeBtn').addEventListener('click', async () => {
+  const code = $('widgetEmbedCode').value;
+  if (!code) {
+    $('widgetSettingsStatus').textContent = 'Save at least one website origin first.';
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(code);
+    $('widgetSettingsStatus').textContent = 'Embed code copied.';
+  } catch {
+    $('widgetEmbedCode').focus();
+    $('widgetEmbedCode').select();
+    $('widgetSettingsStatus').textContent = 'Select and copy the embed code manually.';
   }
 });
 
