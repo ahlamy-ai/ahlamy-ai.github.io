@@ -324,8 +324,6 @@ function showDashboard(tenant, tenantId) {
     '\nStatus: ' + (tenant.status || '-');
 
   loadSubscription();
-  initWorkspaceModules();
-  loadWidgetSettings();
 }
 
 async function routeUser(user) {
@@ -607,6 +605,11 @@ async function loadSubscription() {
     $('subscriptionStatus').textContent =
       'Could not verify trial access. AI features are temporarily locked for safety. Please refresh or contact support.';
     return;
+  }
+
+  if (hasAccess) {
+    initWorkspaceModules();
+    loadWidgetSettings();
   }
 
   const trialEnd = entitlement.trial_ends_at
