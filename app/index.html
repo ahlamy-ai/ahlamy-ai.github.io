@@ -390,7 +390,7 @@ $('forgotPassword').addEventListener('click', () => {
 
 $('sendResetLink').addEventListener('click', async () => {
   const email = $('resetEmail').value.trim();
-  if (!email || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     showMessage('authStatus', 'Enter a valid email address to receive your password reset link.');
     return;
   }
