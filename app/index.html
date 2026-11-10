@@ -460,7 +460,8 @@ $('signupBtn').addEventListener('click', async () => {
       email,
       password,
       options: {
-        data: { full_name: name }
+        data: { full_name: name },
+        emailRedirectTo: window.location.origin + window.location.pathname
       }
     });
 
