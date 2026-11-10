@@ -223,7 +223,7 @@ footer{text-align:center;color:#8291a5;padding:30px}
     <label for="aiTestMessage">Test message</label>
     <textarea id="aiTestMessage" rows="3" style="width:100%;padding:12px;border-radius:9px;border:1px solid #43536a;background:#101827;color:white;font:inherit" placeholder="Ask about your services, prices or company information..."></textarea>
     <button id="aiTestSendBtn" type="button">Send test message</button>
-    <div id="aiTestStatus" class="status" role="status">The background worker is configured automatically. Add the OpenAI API key in Supabase Edge Function Secrets to enable AI replies; messages are safely queued until then.</div>
+    <div id="aiTestStatus" class="status" role="status">The AI worker processes messages in the background. Add your company's services and information, then send a test message.</div>
     <div id="aiTestTranscript" class="module-list" aria-live="polite"></div>
   </section>
 
