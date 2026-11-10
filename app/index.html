@@ -200,6 +200,16 @@ footer{text-align:center;color:#8291a5;padding:30px}
     <div id="billingStatus" class="status hidden" role="status"></div>
   </div>
 
+  <section class="panel" id="aiAssistantPanel" style="margin-top:22px">
+    <h2>AI assistant test</h2>
+    <p>Test your company's assistant from this signed-in workspace. Responses use only this company's saved knowledge and services.</p>
+    <label for="aiTestMessage">Test message</label>
+    <textarea id="aiTestMessage" rows="3" style="width:100%;padding:12px;border-radius:9px;border:1px solid #43536a;background:#101827;color:white;font:inherit" placeholder="Ask about your services, prices or company information..."></textarea>
+    <button id="aiTestSendBtn" type="button">Send test message</button>
+    <div id="aiTestStatus" class="status" role="status">The AI worker requires the provider key and scheduled worker secret before it can answer.</div>
+    <div id="aiTestTranscript" class="module-list" aria-live="polite"></div>
+  </section>
+
   <section class="panel" id="workspaceModules" style="margin-top:22px">
     <h2>Business workspace</h2>
     <p>Manage your company's customers, services, branches, orders, bookings and AI knowledge base.</p>
@@ -749,6 +759,103 @@ function initWorkspaceModules() {
   renderWorkspaceModule('customers');
 }
 
+
+
+// A company-owner test console for the authenticated AI message pipeline.
+let aiTestConversationId = null;
+let aiTestPolling = false;
+
+function addAiTestLine(label, value) {
+  const card = document.createElement('div');
+  card.className = 'module-record';
+  const heading = document.createElement('strong');
+  heading.textContent = label;
+  const body = document.createElement('div');
+  body.textContent = value;
+  card.append(heading, body);
+  $('aiTestTranscript').appendChild(card);
+}
+
+async function refreshAiTestTranscript() {
+  if (!aiTestConversationId) return;
+  const {data,error} = await supabase.from('messages')
+    .select('sender_type,content,created_at')
+    .eq('tenant_id', currentTenantId)
+    .eq('conversation_id', aiTestConversationId)
+    .order('created_at', {ascending:true})
+    .limit(30);
+  if (error) {
+    $('aiTestStatus').textContent = 'Could not load conversation: ' + error.message;
+    return;
+  }
+  $('aiTestTranscript').replaceChildren();
+  (data || []).forEach(row => {
+    const label = row.sender_type === 'assistant' ? 'Ahlamy AI' :
+      row.sender_type === 'customer' ? 'Customer' : 'System';
+    addAiTestLine(label, row.content);
+  });
+}
+
+$('aiTestSendBtn').addEventListener('click', async () => {
+  const content = $('aiTestMessage').value.trim();
+  if (!content) {
+    $('aiTestStatus').textContent = 'Write a test message first.';
+    return;
+  }
+  const {data: sessionData} = await supabase.auth.getSession();
+  if (!sessionData.session?.access_token) {
+    $('aiTestStatus').textContent = 'Please sign in again.';
+    return;
+  }
+
+  $('aiTestSendBtn').disabled = true;
+  $('aiTestSendBtn').textContent = 'Sending...';
+  $('aiTestStatus').textContent = 'Saving your message and adding it to the durable queue...';
+  try {
+    const {data,error} = await supabase.functions.invoke('ahlamy-ai-submit', {
+      body: {content, conversation_id: aiTestConversationId, language: document.documentElement.lang || 'en'}
+    });
+    if (error) throw error;
+    if (!data?.accepted) throw new Error(data?.error || 'Message was not accepted.');
+    aiTestConversationId = data.conversation_id;
+    $('aiTestMessage').value = '';
+    $('aiTestStatus').textContent = data.status === 'processing_triggered'
+      ? 'Message saved. AI worker was triggered; waiting for the reply...'
+      : 'Message saved safely in the queue. It will be retried when the worker is available.';
+    await refreshAiTestTranscript();
+
+    if (!aiTestPolling) {
+      aiTestPolling = true;
+      try {
+        for (let attempt=0; attempt<12; attempt++) {
+          await new Promise(resolve => setTimeout(resolve, 2500));
+          await refreshAiTestTranscript();
+          const {data: latest} = await supabase.from('messages')
+            .select('id')
+            .eq('tenant_id', currentTenantId)
+            .eq('conversation_id', aiTestConversationId)
+            .eq('sender_type', 'assistant')
+            .order('created_at', {ascending:false})
+            .limit(1);
+          if (latest?.length) {
+            $('aiTestStatus').textContent = 'AI response received.';
+            break;
+          }
+          if (attempt === 11) {
+            $('aiTestStatus').textContent = 'Message remains saved. No AI reply yet; check provider and worker secrets.';
+          }
+        }
+      } finally {
+        aiTestPolling = false;
+      }
+    }
+  } catch (error) {
+    $('aiTestStatus').textContent = 'Could not submit test message: ' + error.message;
+  } finally {
+    $('aiTestSendBtn').disabled = false;
+    $('aiTestSendBtn').textContent = 'Send test message';
+  }
+});
 
 // Sign out
 
