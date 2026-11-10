@@ -877,7 +877,7 @@ let currentWidgetKey = null;
 function renderWidgetEmbed() {
   const origins = $('widgetOrigins').value.split(',').map(value => value.trim()).filter(Boolean);
   $('widgetEmbedCode').value = currentWidgetKey && origins.length
-    ? '<script src="https://ahlamy-ai.github.io/widget.js" data-widget-key="' + currentWidgetKey + '" defer></script>'
+    ? '<script src="https://ahlamy-ai.github.io/widget.js" data-widget-key="' + currentWidgetKey + '" defer><\/script>'
     : '';
 }
 
