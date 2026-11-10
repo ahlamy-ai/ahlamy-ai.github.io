@@ -130,14 +130,30 @@ Phase 8: Notifications, analytics, and automation.
 
 Phase 9: Testing, security review, and deployment.
 
-## 11. Existing Assets
+## 11. Tenant-Specific Website Assistant
+
+Every new tenant receives a private AI widget configuration automatically when its tenant record is created.
+
+- Each tenant has a unique public widget key and an explicit HTTPS origin allowlist.
+- The public widget never accepts a tenant ID from the browser; the server resolves the tenant from the widget key.
+- Browser chat sessions use random session tokens stored only as SHA-256 hashes in the database and expire after 24 hours.
+- Public requests are origin-checked and rate-limited. The origin allowlist is a browser boundary, not a substitute for authentication or rate limiting.
+- Customer messages are inserted and enqueued in the same database transaction. A queue failure rolls back the message insert rather than leaving an unprocessed message.
+- The worker reads only the resolved tenant's company profile, knowledge documents, and products/services.
+- Assistant completion is idempotent. Repeated queue delivery cannot create duplicate assistant replies.
+- Failed jobs are retried and moved to a service-role-only dead-letter table after five attempts.
+- Worker invocation uses a separate random token stored in Supabase Vault; the service-role key is never embedded in a public page or widget.
+
+The widget is available to company owners in the dashboard as an embed snippet. The company must add its own website origin and place the snippet on its website; Ahlamy cannot automatically install code on a third-party website.
+
+## 12. Existing Assets
 Preserve the existing Ahlamy website and its GitHub Pages deployment.
 
 Preserve the existing Botpress Ahlamy Lead Qualification bot.
 
 Do not delete or replace existing assets without an approved migration plan.
 
-## 12. Quality Requirements
+## 13. Quality Requirements
 Every phase must be tested before moving to the next phase.
 
 The platform must be designed for reliability, scalability, maintainability, and security.
