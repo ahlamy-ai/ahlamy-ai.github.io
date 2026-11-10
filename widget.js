@@ -141,9 +141,9 @@
     send.disabled = true;
     input.disabled = true;
     try {
+      waitingSince = Date.now();
       await call("send", { content });
       input.value = "";
-      waitingSince = Date.now();
       lastRendered = "";
       await poll();
     } catch (error) {
