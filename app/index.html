@@ -236,6 +236,8 @@ function showDashboard(tenant, tenantId) {
     '\nIndustry: ' + (tenant.industry || '-') +
     '\nLanguage: ' + (tenant.preferred_language || '-') +
     '\nStatus: ' + (tenant.status || '-');
+
+  loadSubscription();
 }
 
 async function routeUser(user) {
@@ -447,9 +449,9 @@ async function loadSubscription() {
   }
   $('subscriptionStatus').textContent =
     'Status: ' + data.status +
-    '\\nPlan billing: ' + (data.currency || 'EUR') + ' / ' + (data.billing_interval || 'month') +
-    (data.current_period_end ? '\\nCurrent period ends: ' + new Date(data.current_period_end).toLocaleDateString() : '') +
-    (data.cancel_at_period_end ? '\\nCancellation scheduled at period end.' : '');
+    '\nPlan billing: ' + (data.currency || 'EUR') + ' / ' + (data.billing_interval || 'month') +
+    (data.current_period_end ? '\nCurrent period ends: ' + new Date(data.current_period_end).toLocaleDateString() : '') +
+    (data.cancel_at_period_end ? '\nCancellation scheduled at period end.' : '');
 }
 
 // Create a Paddle Sandbox checkout using the signed-in user's session
