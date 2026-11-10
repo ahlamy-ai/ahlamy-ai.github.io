@@ -144,7 +144,18 @@
 - One customer can have many orders and bookings.
 - Orders can have payment records.
 
-## 5. Security and Privacy
+## 5. AI Widget and Queue Tables (Implemented)
+
+- `ai_widget_configs`: one private widget configuration per tenant; contains the public widget key, enabled flag, allowed website origins, and greeting.
+- `ahlamy_widget_sessions`: hashed short-lived browser session tokens mapped to one tenant conversation; no raw session token is stored.
+- `ahlamy_widget_rate_limits`: atomic rate-limit counters for widget initialization and message sending.
+- `ahlamy_ai_processed_messages`: idempotency records keyed by queue message ID to prevent duplicate assistant replies.
+- `ahlamy_ai_dead_letters`: service-role-only records for messages that fail five processing attempts.
+- `ahlamy_ai_messages`: durable PGMQ queue; every customer message is enqueued by a database trigger in the same transaction as the message insert.
+
+All widget/session/rate-limit/dead-letter/processed-message tables have RLS enabled and no browser-facing policies. Privileged access is restricted to service-role operations.
+
+## 6. Security and Privacy
 - Never store plain-text passwords.
 - Do not store raw card numbers or CVV codes.
 - Use trusted payment providers.
@@ -153,7 +164,7 @@
 - Record sensitive administrative actions.
 - Define data retention and deletion policies.
 
-## 6. Future Expansion
+## 7. Future Expansion
 - Multiple currencies.
 - Multiple countries and time zones.
 - Arabic, French, and English.
