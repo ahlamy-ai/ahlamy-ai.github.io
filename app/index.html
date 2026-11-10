@@ -520,6 +520,10 @@ async function startApp() {
     await routeUser(data.session.user);
   } else {
     showAuth();
+    if (new URLSearchParams(window.location.search).get('mode') === 'signup') {
+      $('loginForm').classList.add('hidden');
+      $('signupForm').classList.remove('hidden');
+    }
   }
 }
 
