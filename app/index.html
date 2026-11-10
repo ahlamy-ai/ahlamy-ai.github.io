@@ -68,6 +68,19 @@ button:disabled{opacity:.5}
   overflow-wrap:anywhere;
 }
 .small{text-align:center;font-size:13px;color:#94a3b8}
+
+.module-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+.module-tab{width:auto;margin:0;padding:9px 12px;font-size:13px;background:#293b52;color:#e2e8f0}
+.module-tab.active{background:#38bdf8;color:#102033}
+.module-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;align-items:end}
+.module-field label{margin:8px 0 6px;font-size:14px}
+.module-field input,.module-field select,.module-field textarea{width:100%;padding:11px;border-radius:8px;border:1px solid #43536a;background:#101827;color:white;font:inherit}
+.module-field textarea{min-height:84px;resize:vertical}
+.module-form button{grid-column:1/-1;max-width:260px}
+.module-list{display:grid;gap:9px}
+.module-record{padding:12px;border:1px solid #34445b;border-radius:9px;background:#101d30;overflow-wrap:anywhere}
+.module-record strong{display:block;color:#e2e8f0;margin-bottom:4px}
+
 a{color:#7dd3fc;cursor:pointer}
 footer{text-align:center;color:#8291a5;padding:30px}
 </style>
@@ -186,6 +199,25 @@ footer{text-align:center;color:#8291a5;padding:30px}
     </div>
     <div id="billingStatus" class="status hidden" role="status"></div>
   </div>
+
+  <section class="panel" id="workspaceModules" style="margin-top:22px">
+    <h2>Business workspace</h2>
+    <p>Manage your company's customers, services, branches, orders, bookings and AI knowledge base.</p>
+    <div class="module-tabs" id="moduleTabs" aria-label="Workspace modules">
+      <button type="button" class="module-tab" data-module="customers">Customers</button>
+      <button type="button" class="module-tab" data-module="products_services">Services</button>
+      <button type="button" class="module-tab" data-module="branches">Branches</button>
+      <button type="button" class="module-tab" data-module="orders">Orders</button>
+      <button type="button" class="module-tab" data-module="bookings">Bookings</button>
+      <button type="button" class="module-tab" data-module="knowledge_documents">AI knowledge</button>
+    </div>
+    <div id="moduleHeading"><h3>Customers</h3></div>
+    <form id="moduleForm" class="module-form"></form>
+    <div id="moduleStatus" class="status hidden" role="status"></div>
+    <h3>Recent records</h3>
+    <div id="moduleRecords" class="module-list" aria-live="polite">Choose a module to load records.</div>
+  </section>
+
   <button id="logoutBtn" class="secondary">Sign out</button>
 </section>
 
@@ -252,6 +284,7 @@ function showDashboard(tenant, tenantId) {
     '\nStatus: ' + (tenant.status || '-');
 
   loadSubscription();
+  initWorkspaceModules();
 }
 
 async function routeUser(user) {
@@ -504,6 +537,218 @@ $('subscribeBtn').addEventListener('click', async () => {
     $('subscribeBtn').textContent = 'Continue to secure checkout — €39 / month';
   }
 });
+
+
+// Tenant-scoped workspace modules. All reads and writes rely on the existing Supabase RLS policies.
+const workspaceModuleConfig = {
+  customers: {
+    title: 'Customers',
+    table: 'customers',
+    columns: 'id,name,email,phone,preferred_language,created_at',
+    fields: [
+      {name:'name',label:'Customer name',required:true},
+      {name:'email',label:'Email',type:'email'},
+      {name:'phone',label:'Phone'},
+      {name:'preferred_language',label:'Preferred language'}
+    ],
+    titleField: 'name',
+    detailFields: ['email','phone','preferred_language']
+  },
+  products_services: {
+    title: 'Products & services',
+    table: 'products_services',
+    columns: 'id,name,description,price,currency,availability_status,created_at',
+    fields: [
+      {name:'name',label:'Name',required:true},
+      {name:'description',label:'Description',type:'textarea'},
+      {name:'price',label:'Price',type:'number'},
+      {name:'currency',label:'Currency (e.g. EUR)'},
+      {name:'availability_status',label:'Availability',type:'select',options:['unknown','available','unavailable']}
+    ],
+    titleField: 'name',
+    detailFields: ['description','price','currency','availability_status']
+  },
+  branches: {
+    title: 'Branches',
+    table: 'branches',
+    columns: 'id,name,address,phone,created_at',
+    fields: [
+      {name:'name',label:'Branch name',required:true},
+      {name:'address',label:'Address'},
+      {name:'phone',label:'Phone'}
+    ],
+    titleField: 'name',
+    detailFields: ['address','phone']
+  },
+  orders: {
+    title: 'Orders',
+    table: 'orders',
+    columns: 'id,status,total_amount,currency,customer_id,created_at',
+    fields: [
+      {name:'status',label:'Status',type:'select',options:['pending','confirmed','processing','completed','cancelled'],required:true},
+      {name:'total_amount',label:'Total amount',type:'number'},
+      {name:'currency',label:'Currency (e.g. EUR)'},
+      {name:'customer_id',label:'Customer ID (optional)'}
+    ],
+    titleField: 'status',
+    detailFields: ['total_amount','currency','customer_id']
+  },
+  bookings: {
+    title: 'Bookings',
+    table: 'bookings',
+    columns: 'id,booking_type,start_time,end_time,status,customer_id,branch_id,created_at',
+    fields: [
+      {name:'booking_type',label:'Booking type',required:true},
+      {name:'start_time',label:'Start time',type:'datetime-local',required:true},
+      {name:'end_time',label:'End time',type:'datetime-local'},
+      {name:'status',label:'Status',type:'select',options:['pending','confirmed','completed','cancelled']},
+      {name:'customer_id',label:'Customer ID (optional)'},
+      {name:'branch_id',label:'Branch ID (optional)'}
+    ],
+    titleField: 'booking_type',
+    detailFields: ['start_time','end_time','status','customer_id','branch_id']
+  },
+  knowledge_documents: {
+    title: 'AI knowledge base',
+    table: 'knowledge_documents',
+    columns: 'id,title,content,language,created_at',
+    fields: [
+      {name:'title',label:'Document title',required:true},
+      {name:'content',label:'Information for the AI assistant',type:'textarea',required:true},
+      {name:'language',label:'Language',type:'select',options:['en','fr','ar']}
+    ],
+    titleField: 'title',
+    detailFields: ['language','content']
+  }
+};
+let activeWorkspaceModule = 'customers';
+
+function createModuleField(field) {
+  const wrap = document.createElement('div');
+  wrap.className = 'module-field';
+  const label = document.createElement('label');
+  label.htmlFor = 'module-' + field.name;
+  label.textContent = field.label;
+  wrap.appendChild(label);
+  let input;
+  if (field.type === 'textarea') {
+    input = document.createElement('textarea');
+  } else if (field.type === 'select') {
+    input = document.createElement('select');
+    (field.options || []).forEach(value => {
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = value;
+      input.appendChild(option);
+    });
+  } else {
+    input = document.createElement('input');
+    input.type = field.type || 'text';
+  }
+  input.id = 'module-' + field.name;
+  input.name = field.name;
+  input.required = Boolean(field.required);
+  if (field.type !== 'select') input.placeholder = field.label;
+  wrap.appendChild(input);
+  return wrap;
+}
+
+function renderWorkspaceModule(moduleKey) {
+  const config = workspaceModuleConfig[moduleKey];
+  if (!config) return;
+  activeWorkspaceModule = moduleKey;
+  $('moduleHeading').textContent = '';
+  const heading = document.createElement('h3');
+  heading.textContent = config.title;
+  $('moduleHeading').appendChild(heading);
+  $('moduleForm').replaceChildren();
+  config.fields.forEach(field => $('moduleForm').appendChild(createModuleField(field)));
+  const submit = document.createElement('button');
+  submit.type = 'submit';
+  submit.textContent = 'Add ' + config.title.replace(/s$/, '');
+  $('moduleForm').appendChild(submit);
+  document.querySelectorAll('.module-tab').forEach(button => {
+    button.classList.toggle('active', button.dataset.module === moduleKey);
+  });
+  $('moduleStatus').classList.add('hidden');
+  loadWorkspaceRecords(moduleKey);
+}
+
+async function loadWorkspaceRecords(moduleKey) {
+  const config = workspaceModuleConfig[moduleKey];
+  if (!config || !currentTenantId) return;
+  $('moduleRecords').textContent = 'Loading...';
+  const {data,error} = await supabase.from(config.table)
+    .select(config.columns)
+    .eq('tenant_id', currentTenantId)
+    .order('created_at', {ascending:false})
+    .limit(15);
+  if (error) {
+    $('moduleRecords').textContent = 'Could not load records: ' + error.message;
+    return;
+  }
+  $('moduleRecords').replaceChildren();
+  if (!data || data.length === 0) {
+    $('moduleRecords').textContent = 'No records yet. Add the first one above.';
+    return;
+  }
+  data.forEach(record => {
+    const card = document.createElement('div');
+    card.className = 'module-record';
+    const title = document.createElement('strong');
+    title.textContent = String(record[config.titleField] ?? config.title);
+    card.appendChild(title);
+    config.detailFields.forEach(key => {
+      const value = record[key];
+      if (value === null || value === undefined || value === '') return;
+      const line = document.createElement('div');
+      line.textContent = key.replaceAll('_',' ') + ': ' + String(value);
+      card.appendChild(line);
+    });
+    $('moduleRecords').appendChild(card);
+  });
+}
+
+function initWorkspaceModules() {
+  if (!$('moduleForm') || $('moduleForm').dataset.ready === 'true') return;
+  $('moduleForm').dataset.ready = 'true';
+  $('moduleTabs').addEventListener('click', event => {
+    const button = event.target.closest('button[data-module]');
+    if (button) renderWorkspaceModule(button.dataset.module);
+  });
+  $('moduleForm').addEventListener('submit', async event => {
+    event.preventDefault();
+    const config = workspaceModuleConfig[activeWorkspaceModule];
+    if (!config || !currentTenantId) return;
+    const submit = $('moduleForm').querySelector('button[type="submit"]');
+    submit.disabled = true;
+    submit.textContent = 'Saving...';
+    const payload = {tenant_id: currentTenantId};
+    config.fields.forEach(field => {
+      const value = $('module-' + field.name).value.trim();
+      if (value === '') return;
+      if (field.type === 'number') payload[field.name] = Number(value);
+      else if (field.type === 'datetime-local') payload[field.name] = new Date(value).toISOString();
+      else payload[field.name] = value;
+    });
+    try {
+      const {error} = await supabase.from(config.table).insert(payload);
+      if (error) throw error;
+      $('moduleForm').reset();
+      $('moduleStatus').textContent = 'Record saved successfully.';
+      $('moduleStatus').classList.remove('hidden');
+      await loadWorkspaceRecords(activeWorkspaceModule);
+    } catch (error) {
+      $('moduleStatus').textContent = 'Could not save record: ' + error.message;
+      $('moduleStatus').classList.remove('hidden');
+    } finally {
+      submit.disabled = false;
+      submit.textContent = 'Add ' + config.title.replace(/s$/, '');
+    }
+  });
+  renderWorkspaceModule('customers');
+}
+
 
 // Sign out
 
