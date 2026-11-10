@@ -165,6 +165,13 @@ footer{text-align:center;color:#8291a5;padding:30px}
   <h1 id="welcomeTitle">Your workspace</h1>
   <p>Your company workspace is connected to Ahlamy.</p>
   <div id="companyDetails" class="status"></div>
+  <div class="panel" style="margin-top:18px">
+    <h2>Subscription</h2>
+    <div id="subscriptionStatus" class="status" role="status">Checking subscription...</div>
+    <button id="subscribeBtn">Subscribe to Basic — €39 / month</button>
+    <p class="small">Secure Paddle Sandbox checkout. No live payment is made in this test.</p>
+    <div id="billingStatus" class="status hidden" role="status"></div>
+  </div>
   <button id="logoutBtn" class="secondary">Sign out</button>
 </section>
 
@@ -189,6 +196,7 @@ const supabase = createClient(
 );
 
 const $ = id => document.getElementById(id);
+let currentTenantId = null;
 
 function showMessage(id, text) {
   $(id).textContent = text;
@@ -215,7 +223,8 @@ function showCompany() {
   $('companyPanel').classList.remove('hidden');
 }
 
-function showDashboard(tenant) {
+function showDashboard(tenant, tenantId) {
+  currentTenantId = tenantId || currentTenantId;
   hideSections();
   $('dashboard').classList.remove('hidden');
 
@@ -259,7 +268,7 @@ async function routeUser(user) {
     return;
   }
 
-  showDashboard(tenant);
+  showDashboard(tenant, profile.tenant_id);
 }
 
 // Switch to registration
@@ -408,13 +417,75 @@ $('createCompanyBtn').addEventListener('click', async () => {
 
     if (tenantError) throw tenantError;
 
-    showDashboard(tenant);
+    showDashboard(tenant, data);
 
   } catch (error) {
     showMessage('companyStatus',error.message);
   } finally {
     $('createCompanyBtn').disabled = false;
     $('createCompanyBtn').textContent = 'Create my company';
+  }
+});
+
+// Load the authenticated company's subscription status
+async function loadSubscription() {
+  if (!currentTenantId) return;
+  $('subscriptionStatus').textContent = 'Checking subscription...';
+  const { data, error } = await supabase
+    .from('tenant_subscriptions')
+    .select('status,currency,billing_interval,current_period_end,cancel_at_period_end')
+    .eq('tenant_id', currentTenantId)
+    .maybeSingle();
+
+  if (error) {
+    $('subscriptionStatus').textContent = 'Could not load subscription status: ' + error.message;
+    return;
+  }
+  if (!data) {
+    $('subscriptionStatus').textContent = 'No active subscription found. Choose Basic to continue.';
+    return;
+  }
+  $('subscriptionStatus').textContent =
+    'Status: ' + data.status +
+    '\\nPlan billing: ' + (data.currency || 'EUR') + ' / ' + (data.billing_interval || 'month') +
+    (data.current_period_end ? '\\nCurrent period ends: ' + new Date(data.current_period_end).toLocaleDateString() : '') +
+    (data.cancel_at_period_end ? '\\nCancellation scheduled at period end.' : '');
+}
+
+// Create a Paddle Sandbox checkout using the signed-in user's session
+$('subscribeBtn').addEventListener('click', async () => {
+  $('subscribeBtn').disabled = true;
+  $('subscribeBtn').textContent = 'Preparing secure checkout...';
+  $('billingStatus').classList.add('hidden');
+
+  try {
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) throw sessionError;
+    const accessToken = sessionData.session?.access_token;
+    if (!accessToken) throw new Error('Please sign in again.');
+
+    const response = await fetch(SUPABASE_URL + '/functions/v1/create-paddle-checkout', {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: 'Bearer ' + accessToken,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ plan: 'basic_month' })
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(result.error || 'Checkout could not be created.');
+    }
+    if (!result.checkout_url || !result.checkout_url.startsWith('https://')) {
+      throw new Error('Paddle did not return a valid secure checkout link.');
+    }
+    window.location.assign(result.checkout_url);
+  } catch (error) {
+    showMessage('billingStatus', error.message || 'Unable to start checkout.');
+  } finally {
+    $('subscribeBtn').disabled = false;
+    $('subscribeBtn').textContent = 'Subscribe to Basic — €39 / month';
   }
 });
 
