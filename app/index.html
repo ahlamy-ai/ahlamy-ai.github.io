@@ -201,7 +201,7 @@ footer{text-align:center;color:#8291a5;padding:30px}
     <div class="panel" style="margin-top:14px">
       <h3>Basic — €39 / month</h3>
       <p>AI chatbot for small businesses.</p>
-      <button id="subscribeBtn">Choose Basic</button>
+      <button id="subscribeBtn" type="button" disabled>Payments setup pending — no charge</button>
       <p class="small">Secure Paddle checkout. Review the final price and billing details before confirming payment.</p>
     </div>
     <div class="panel" style="margin-top:14px">
@@ -591,7 +591,42 @@ $('createCompanyBtn').addEventListener('click', async () => {
 // Load the authenticated company's subscription status
 async function loadSubscription() {
   if (!currentTenantId) return;
-  $('subscriptionStatus').textContent = 'Checking subscription...';
+  $('subscriptionStatus').textContent = 'Checking trial and subscription access...';
+  const { data: entitlementRows, error: entitlementError } =
+    await supabase.rpc('get_current_tenant_entitlement');
+
+  const entitlement = Array.isArray(entitlementRows) ? entitlementRows[0] : entitlementRows;
+  const hasAccess = !entitlementError && entitlement?.has_access === true;
+
+  // The server is authoritative; hide all paid workspace features if access cannot be verified.
+  ['aiAssistantPanel','websiteWidgetPanel','workspaceModules'].forEach(id => {
+    $(id).classList.toggle('hidden', !hasAccess);
+  });
+
+  if (entitlementError || !entitlement) {
+    $('subscriptionStatus').textContent =
+      'Could not verify trial access. AI features are temporarily locked for safety. Please refresh or contact support.';
+    return;
+  }
+
+  const trialEnd = entitlement.trial_ends_at
+    ? new Date(entitlement.trial_ends_at)
+    : null;
+  const trialActive = trialEnd && trialEnd.getTime() > Date.now();
+  if (trialActive) {
+    $('subscriptionStatus').textContent =
+      'Free trial active until: ' + trialEnd.toLocaleString() +
+      '\nYou have 7 days from account signup. After expiry, AI and workspace features are locked until a subscription is active.';
+  } else if (!hasAccess) {
+    $('subscriptionStatus').textContent =
+      'Your free trial has ended. AI, website assistant and workspace features are locked. Your account and this billing page remain accessible.';
+  } else {
+    $('subscriptionStatus').textContent =
+      'Subscription access active' +
+      (entitlement.subscription_status ? ' — ' + entitlement.subscription_status : '') +
+      (trialEnd ? '\nTrial ended: ' + trialEnd.toLocaleDateString() : '');
+  }
+
   const { data, error } = await supabase
     .from('tenant_subscriptions')
     .select('status,currency,billing_interval,current_period_end,cancel_at_period_end')
@@ -599,18 +634,15 @@ async function loadSubscription() {
     .maybeSingle();
 
   if (error) {
-    $('subscriptionStatus').textContent = 'Could not load subscription status: ' + error.message;
+    $('subscriptionStatus').textContent += '\nCould not load billing details: ' + error.message;
     return;
   }
-  if (!data) {
-    $('subscriptionStatus').textContent = 'No active subscription found. Choose Basic to continue.';
-    return;
+  if (data) {
+    $('subscriptionStatus').textContent +=
+      '\nPlan billing: ' + (data.currency || 'EUR') + ' / ' + (data.billing_interval || 'month') +
+      (data.current_period_end ? '\nCurrent period ends: ' + new Date(data.current_period_end).toLocaleDateString() : '') +
+      (data.cancel_at_period_end ? '\nCancellation scheduled at period end.' : '');
   }
-  $('subscriptionStatus').textContent =
-    'Status: ' + data.status +
-    '\nPlan billing: ' + (data.currency || 'EUR') + ' / ' + (data.billing_interval || 'month') +
-    (data.current_period_end ? '\nCurrent period ends: ' + new Date(data.current_period_end).toLocaleDateString() : '') +
-    (data.cancel_at_period_end ? '\nCancellation scheduled at period end.' : '');
 }
 
 // Create a Paddle Live checkout using the signed-in user's session
