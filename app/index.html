@@ -421,10 +421,19 @@ $('signupBtn').addEventListener('click', async () => {
 
     if (data.session && data.user) {
       await routeUser(data.user);
+    } else if (
+      data.user &&
+      Array.isArray(data.user.identities) &&
+      data.user.identities.length === 0
+    ) {
+      showMessage(
+        'authStatus',
+        'This email may already be registered. Please use Sign in instead. If you have not registered before, check your inbox for a confirmation email.'
+      );
     } else {
       showMessage(
         'authStatus',
-        'Account created. Please check your email to confirm your account, then sign in.'
+        'Your signup request was accepted. Check the inbox and spam folder of the email address you entered for a confirmation link, then sign in.'
       );
     }
 
