@@ -202,20 +202,22 @@ footer{text-align:center;color:#8291a5;padding:30px}
     <h2>Choose your subscription</h2>
     <div id="subscriptionStatus" class="status" role="status">Checking subscription...</div>
     <div class="panel" style="margin-top:14px">
-      <h3>Basic — €39 / month</h3>
-      <p>AI chatbot for small businesses.</p>
+      <h3>Select a plan and billing period</h3>
+      <label for="planSelect">Subscription</label>
+      <select id="planSelect">
+        <option value="basic_month">Basic — €39 / month</option>
+        <option value="basic_quarter">Basic — €117 / 3 months</option>
+        <option value="basic_year">Basic — €468 / year</option>
+        <option value="professional_month">Professional — €99 / month</option>
+        <option value="professional_quarter">Professional — €297 / 3 months</option>
+        <option value="professional_year">Professional — €1,188 / year</option>
+        <option value="business_month">Business — €249 / month</option>
+        <option value="business_quarter">Business — €747 / 3 months</option>
+        <option value="business_year">Business — €2,988 / year</option>
+      </select>
+      <p class="small">All prices are in EUR. Three-month and yearly subscriptions are billed upfront for the selected period.</p>
       <button id="subscribeBtn" type="button" disabled>Payments setup pending — no charge</button>
-      <p class="small">Secure Paddle checkout. Review the final price and billing details before confirming payment.</p>
-    </div>
-    <div class="panel" style="margin-top:14px">
-      <h3>Professional — $99 / month</h3>
-      <p>Advanced chatbot and customer support automation.</p>
-      <a href="mailto:contact.ahlamy@gmail.com?subject=Professional%20plan%20enquiry"><button type="button" class="secondary">Contact us about Professional</button></a>
-    </div>
-    <div class="panel" style="margin-top:14px">
-      <h3>Business — $249+ / month</h3>
-      <p>Customized AI solutions and business automation.</p>
-      <a href="mailto:contact.ahlamy@gmail.com?subject=Business%20plan%20enquiry"><button type="button" class="secondary">Contact us about Business</button></a>
+      <p class="small">Paddle checkout will be enabled only after the Live configuration and end-to-end tests are verified.</p>
     </div>
     <div id="billingStatus" class="status hidden" role="status"></div>
   </div>
@@ -720,7 +722,7 @@ $('subscribeBtn').addEventListener('click', async () => {
         Authorization: 'Bearer ' + accessToken,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ plan: 'basic_month' })
+      body: JSON.stringify({ plan: $('planSelect').value })
     });
     const result = await response.json().catch(() => ({}));
     if (!response.ok) {
@@ -733,8 +735,8 @@ $('subscribeBtn').addEventListener('click', async () => {
   } catch (error) {
     showMessage('billingStatus', error.message || 'Unable to start checkout.');
   } finally {
-    $('subscribeBtn').disabled = false;
-    $('subscribeBtn').textContent = 'Continue to secure checkout — €39 / month';
+    $('subscribeBtn').disabled = true;
+    $('subscribeBtn').textContent = 'Payments setup pending — no charge';
   }
 });
 
