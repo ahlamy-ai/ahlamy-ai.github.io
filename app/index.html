@@ -129,6 +129,9 @@ footer{text-align:center;color:#8291a5;padding:30px}
     <label>Password (minimum 8 characters)</label>
     <input id="signupPassword" type="password" autocomplete="new-password">
 
+    <div id="turnstileWidget" style="margin-top:16px"></div>
+    <p class="small">Complete the security check before creating your account.</p>
+
     <button id="signupBtn">Create account</button>
 
     <p class="small">
@@ -281,6 +284,45 @@ const supabase = createClient(
   SUPABASE_KEY
 );
 
+const TURNSTILE_SITE_KEY = '0x4AAAAAAF8h6y13Z-VumS2v';
+let turnstileToken = '';
+let turnstileWidgetId = null;
+let turnstileReadyPromise = null;
+
+function ensureTurnstile() {
+  if (window.turnstile) return Promise.resolve();
+  if (!turnstileReadyPromise) {
+    turnstileReadyPromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+      script.async = true;
+      script.defer = true;
+      script.onload = resolve;
+      script.onerror = () => reject(new Error('Could not load the security check. Please refresh and try again.'));
+      document.head.appendChild(script);
+    });
+  }
+  return turnstileReadyPromise;
+}
+
+async function renderSignupTurnstile() {
+  try {
+    await ensureTurnstile();
+    if (turnstileWidgetId !== null) {
+      window.turnstile.reset(turnstileWidgetId);
+      return;
+    }
+    turnstileWidgetId = window.turnstile.render('#turnstileWidget', {
+      sitekey: TURNSTILE_SITE_KEY,
+      callback: token => { turnstileToken = token; },
+      'expired-callback': () => { turnstileToken = ''; },
+      'error-callback': () => { turnstileToken = ''; }
+    });
+  } catch (error) {
+    showMessage('authStatus', error.message || 'Security check could not be loaded.');
+  }
+}
+
 const $ = id => document.getElementById(id);
 let currentTenantId = null;
 
@@ -365,6 +407,7 @@ $('showSignup').addEventListener('click', () => {
   $('loginForm').classList.add('hidden');
   $('signupForm').classList.remove('hidden');
   $('authStatus').classList.add('hidden');
+  renderSignupTurnstile();
 });
 
 $('showLogin').addEventListener('click', () => {
@@ -481,6 +524,11 @@ $('signupBtn').addEventListener('click', async () => {
     return;
   }
 
+  if (!turnstileToken) {
+    showMessage('authStatus', 'Please complete the security check before creating your account.');
+    return;
+  }
+
   $('signupBtn').disabled = true;
   $('signupBtn').textContent = 'Creating account...';
 
@@ -490,7 +538,8 @@ $('signupBtn').addEventListener('click', async () => {
       password,
       options: {
         data: { full_name: name },
-        emailRedirectTo: window.location.origin + window.location.pathname
+        emailRedirectTo: window.location.origin + window.location.pathname,
+        captchaToken: turnstileToken
       }
     });
 
@@ -517,6 +566,10 @@ $('signupBtn').addEventListener('click', async () => {
   } catch (error) {
     showMessage('authStatus',error.message);
   } finally {
+    turnstileToken = '';
+    if (window.turnstile && turnstileWidgetId !== null) {
+      window.turnstile.reset(turnstileWidgetId);
+    }
     $('signupBtn').disabled = false;
     $('signupBtn').textContent = 'Create account';
   }
