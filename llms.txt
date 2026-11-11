@@ -1,0 +1,23 @@
+# AHLAMY
+
+> AHLAMY is an AI-assisted customer communication platform for businesses, helping organize customer enquiries, support conversations, and booking workflows.
+
+## Product
+AHLAMY serves businesses across sectors where customer communication and service workflows matter, including property management, hospitality, e-commerce, travel, transport and rental, education, maintenance, and professional services.
+
+Depending on configuration and enabled features, AHLAMY can support:
+- AI-assisted replies to customer enquiries.
+- Organizing incoming customer conversations.
+- Customer support workflows.
+- Booking and service request workflows.
+- Multilingual business communication.
+
+AHLAMY is built in Algeria for businesses worldwide.
+
+## Links
+- Website: https://ahlamy-ai.github.io/
+- Application: https://ahlamy-ai.github.io/app/
+- Contact: contact.ahlamy@gmail.com
+
+## Important
+Feature availability depends on configuration and enabled integrations. Contact AHLAMY to discuss suitability for a specific business workflow.
