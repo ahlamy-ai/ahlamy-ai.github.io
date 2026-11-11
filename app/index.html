@@ -687,7 +687,7 @@ async function loadSubscription() {
 
   const { data, error } = await supabase
     .from('tenant_subscriptions')
-    .select('status,currency,billing_interval,current_period_end,cancel_at_period_end')
+    .select('status,currency,billing_interval,billing_interval_count,current_period_end,cancel_at_period_end')
     .eq('tenant_id', currentTenantId)
     .maybeSingle();
 
@@ -696,12 +696,14 @@ async function loadSubscription() {
     return;
   }
   if (data) {
+    const interval = data.billing_interval || 'month';
+    const intervalCount = Number(data.billing_interval_count || 1);
+    const intervalLabel = intervalCount === 1 ? interval : intervalCount + ' ' + interval + 's';
     $('subscriptionStatus').textContent +=
-      '\nPlan billing: ' + (data.currency || 'EUR') + ' / ' + (data.billing_interval || 'month') +
+      '\nPlan billing: ' + (data.currency || 'EUR') + ' / ' + intervalLabel +
       (data.current_period_end ? '\nCurrent period ends: ' + new Date(data.current_period_end).toLocaleDateString() : '') +
       (data.cancel_at_period_end ? '\nCancellation scheduled at period end.' : '');
-  }
-}
+  }}
 
 // Create a Paddle Live checkout using the signed-in user's session
 $('subscribeBtn').addEventListener('click', async () => {
