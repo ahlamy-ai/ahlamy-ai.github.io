@@ -250,7 +250,7 @@ footer{text-align:center;color:#8291a5;padding:30px}
     <p>Manage your company's customers, services, branches, orders, bookings and AI knowledge base.</p>
     <div class="module-tabs" id="moduleTabs" aria-label="Workspace modules">
       <button type="button" class="module-tab" data-module="customers">Customers</button>
-      <button type="button" class="module-tab" data-module="marketing" onclick="document.getElementById('marketingCenter').classList.remove('hidden'); document.getElementById('marketingCenter').scrollIntoView({behavior:'smooth'});">Marketing</button>
+      <button type="button" class="module-tab" data-module="marketing">Marketing</button>
       <button type="button" class="module-tab" data-module="products_services">Services</button>
       <button type="button" class="module-tab" data-module="branches">Branches</button>
       <button type="button" class="module-tab" data-module="orders">Orders</button>
@@ -957,6 +957,15 @@ async function loadWorkspaceRecords(moduleKey) {
 function initWorkspaceModules() {
   if (!$('moduleForm') || $('moduleForm').dataset.ready === 'true') return;
   $('moduleForm').dataset.ready = 'true';
+  const marketingTab = document.querySelector('[data-module="marketing"]');
+  if (marketingTab && marketingTab.dataset.marketingReady !== 'true') {
+    marketingTab.dataset.marketingReady = 'true';
+    marketingTab.addEventListener('click', () => {
+      $('marketingCenter').classList.remove('hidden');
+      $('marketingCenter').scrollIntoView({behavior:'smooth'});
+      loadMarketingDrafts();
+    });
+  }
   $('moduleTabs').addEventListener('click', event => {
     const button = event.target.closest('button[data-module]');
     if (button) renderWorkspaceModule(button.dataset.module);
