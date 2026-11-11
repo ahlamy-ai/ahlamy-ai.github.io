@@ -250,6 +250,7 @@ footer{text-align:center;color:#8291a5;padding:30px}
     <p>Manage your company's customers, services, branches, orders, bookings and AI knowledge base.</p>
     <div class="module-tabs" id="moduleTabs" aria-label="Workspace modules">
       <button type="button" class="module-tab" data-module="customers">Customers</button>
+      <button type="button" class="module-tab" data-module="marketing" onclick="document.getElementById('marketingCenter').classList.remove('hidden'); document.getElementById('marketingCenter').scrollIntoView({behavior:'smooth'});">Marketing</button>
       <button type="button" class="module-tab" data-module="products_services">Services</button>
       <button type="button" class="module-tab" data-module="branches">Branches</button>
       <button type="button" class="module-tab" data-module="orders">Orders</button>
@@ -261,6 +262,46 @@ footer{text-align:center;color:#8291a5;padding:30px}
     <div id="moduleStatus" class="status hidden" role="status"></div>
     <h3>Recent records</h3>
     <div id="moduleRecords" class="module-list" aria-live="polite">Choose a module to load records.</div>
+  </section>
+
+
+  <section class="panel hidden" id="marketingCenter" style="margin-top:22px">
+    <h2>Marketing Center</h2>
+    <p>Create and organize AHLAMY promotional content. Drafts are saved privately to your company workspace. Publishing requires an authorized platform connection.</p>
+    <div class="status" id="marketingConnectionStatus">No social accounts are connected yet. You can prepare and save drafts here.</div>
+    <label for="marketingAudience">Target audience</label>
+    <select id="marketingAudience">
+      <option value="business owners">Business owners</option>
+      <option value="hotels and hospitality">Hotels & hospitality</option>
+      <option value="real estate and property managers">Real estate & property managers</option>
+      <option value="e-commerce and retail">E-commerce & retail</option>
+      <option value="travel agencies and transport">Travel agencies & transport</option>
+      <option value="clinics and service centers">Clinics & service centers</option>
+      <option value="education and training">Education & training</option>
+    </select>
+    <label for="marketingLanguage">Post language</label>
+    <select id="marketingLanguage">
+      <option value="en">English</option>
+      <option value="fr">Français</option>
+    </select>
+    <label>Platforms to prepare for</label>
+    <div class="module-list" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr));margin:10px 0">
+      <label><input type="checkbox" name="marketingPlatform" value="facebook" checked style="width:auto"> Facebook</label>
+      <label><input type="checkbox" name="marketingPlatform" value="instagram" checked style="width:auto"> Instagram</label>
+      <label><input type="checkbox" name="marketingPlatform" value="tiktok" style="width:auto"> TikTok</label>
+      <label><input type="checkbox" name="marketingPlatform" value="youtube" style="width:auto"> YouTube</label>
+    </div>
+    <label for="marketingCaption">Post text</label>
+    <textarea id="marketingCaption" rows="7" style="width:100%;padding:12px;border-radius:9px;border:1px solid #43536a;background:#101827;color:white;font:inherit" placeholder="Write your AHLAMY campaign post..."></textarea>
+    <label for="marketingMediaUrl">Media URL (optional)</label>
+    <input id="marketingMediaUrl" type="url" placeholder="https://...">
+    <label for="marketingMediaType">Media type</label>
+    <select id="marketingMediaType"><option value="text">Text only</option><option value="image">Image</option><option value="video">Video</option></select>
+    <button type="button" id="marketingSaveDraft">Save campaign draft</button>
+    <button type="button" class="secondary" id="marketingCopyDraft">Copy post text</button>
+    <div id="marketingStatus" class="status hidden" role="status"></div>
+    <h3>Saved campaign drafts</h3>
+    <div id="marketingDrafts" class="module-list">Loading drafts…</div>
   </section>
 
   <button id="logoutBtn" class="secondary">Sign out</button>
@@ -1114,6 +1155,87 @@ $('copyWidgetCodeBtn').addEventListener('click', async () => {
     $('widgetEmbedCode').select();
     $('widgetSettingsStatus').textContent = 'Select and copy the embed code manually.';
   }
+});
+
+
+// AHLAMY Marketing Center: private campaign drafts; no platform publishing until OAuth is connected.
+async function loadMarketingDrafts() {
+  if (!currentTenantId) return;
+  $('marketingDrafts').textContent = 'Loading drafts…';
+  const {data,error} = await supabase.from('social_posts')
+    .select('id,caption,platforms,media_type,media_url,status,created_at')
+    .eq('tenant_id', currentTenantId)
+    .order('created_at', {ascending:false})
+    .limit(20);
+  if (error) {
+    $('marketingDrafts').textContent = 'Could not load drafts: ' + error.message;
+    return;
+  }
+  $('marketingDrafts').replaceChildren();
+  if (!data?.length) {
+    $('marketingDrafts').textContent = 'No campaign drafts yet. Create your first post above.';
+    return;
+  }
+  data.forEach(post => {
+    const card = document.createElement('div');
+    card.className = 'module-record';
+    const title = document.createElement('strong');
+    title.textContent = (post.platforms || []).join(', ').toUpperCase() + ' — ' + (post.status || 'draft').toUpperCase();
+    const body = document.createElement('p');
+    body.textContent = post.caption || '';
+    const meta = document.createElement('div');
+    meta.className = 'small';
+    meta.textContent = new Date(post.created_at).toLocaleString() + (post.media_url ? ' · ' + post.media_type + ' attached by URL' : '');
+    const copy = document.createElement('button');
+    copy.type = 'button';
+    copy.className = 'secondary';
+    copy.textContent = 'Copy this draft';
+    copy.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(post.caption || ''); copy.textContent = 'Copied'; }
+      catch { $('marketingStatus').textContent = 'Clipboard unavailable. Select the text and copy it manually.'; $('marketingStatus').classList.remove('hidden'); }
+    });
+    card.append(title, body, meta, copy);
+    $('marketingDrafts').appendChild(card);
+  });
+}
+$('marketingSaveDraft').addEventListener('click', async () => {
+  const caption = $('marketingCaption').value.trim();
+  const platforms = Array.from(document.querySelectorAll('input[name="marketingPlatform"]:checked')).map(el => el.value);
+  const mediaUrl = $('marketingMediaUrl').value.trim();
+  const mediaType = $('marketingMediaType').value;
+  if (!caption) { $('marketingStatus').textContent = 'Write the post text first.'; $('marketingStatus').classList.remove('hidden'); return; }
+  if (!platforms.length) { $('marketingStatus').textContent = 'Choose at least one platform.'; $('marketingStatus').classList.remove('hidden'); return; }
+  if (mediaUrl && !/^https:\/\//i.test(mediaUrl)) { $('marketingStatus').textContent = 'Use a secure HTTPS media URL.'; $('marketingStatus').classList.remove('hidden'); return; }
+  $('marketingSaveDraft').disabled = true;
+  $('marketingSaveDraft').textContent = 'Saving…';
+  try {
+    const {data: userData, error: userError} = await supabase.auth.getUser();
+    if (userError || !userData.user) throw new Error('Please sign in again.');
+    const {error} = await supabase.from('social_posts').insert({
+      tenant_id: currentTenantId,
+      created_by: userData.user.id,
+      caption,
+      platforms,
+      media_url: mediaUrl || null,
+      media_type: mediaType,
+      status: 'draft'
+    });
+    if (error) throw error;
+    $('marketingStatus').textContent = 'Draft saved privately. It has not been published to any social network.';
+    $('marketingStatus').classList.remove('hidden');
+    await loadMarketingDrafts();
+  } catch (error) {
+    $('marketingStatus').textContent = 'Could not save draft: ' + error.message;
+    $('marketingStatus').classList.remove('hidden');
+  } finally {
+    $('marketingSaveDraft').disabled = false;
+    $('marketingSaveDraft').textContent = 'Save campaign draft';
+  }
+});
+$('marketingCopyDraft').addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText($('marketingCaption').value); $('marketingStatus').textContent = 'Post text copied.'; }
+  catch { $('marketingStatus').textContent = 'Clipboard unavailable. Select the text and copy it manually.'; }
+  $('marketingStatus').classList.remove('hidden');
 });
 
 // Sign out
