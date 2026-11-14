@@ -126,6 +126,33 @@ a{color:#7ddcff}
 @media(max-width:640px){header{padding:14px 18px}.logo{font-size:22px}header span{font-size:10px}main{margin:16px auto 34px;padding:0 12px}#dashboard{padding:15px;border-radius:18px}.panel{padding:17px;border-radius:16px}.module-tabs{top:62px;overflow-x:auto;flex-wrap:nowrap;padding:10px 0}.module-tab{flex:0 0 auto;font-size:12px;padding:9px 13px}.module-form{grid-template-columns:1fr}.module-form button{max-width:none}#logoutBtn{margin-bottom:5px}#dashboard>h1{font-size:27px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
 
+
+/* AHLAMY premium violet / teal visual identity */
+:root{color-scheme:dark;--bg:#0b0b18;--surface:#17172b;--surface2:#20203a;--line:rgba(176,164,255,.2);--muted:#b9b8d0;--accent:#8b7cff;--accent2:#39d6c5}
+body{background:radial-gradient(ellipse at 8% 0%,rgba(120,91,255,.25),transparent 36%),radial-gradient(ellipse at 94% 10%,rgba(34,211,190,.14),transparent 32%),linear-gradient(145deg,#090916,#111326 55%,#0b1720);color:#f7f5ff}
+header{background:rgba(11,11,24,.82);border-bottom:1px solid rgba(139,124,255,.22);backdrop-filter:blur(20px)}
+.logo{color:#b6aaff;text-shadow:0 0 28px rgba(139,124,255,.45);letter-spacing:.16em}
+#dashboard{background:linear-gradient(145deg,rgba(30,28,57,.96),rgba(15,25,39,.98));border:1px solid rgba(139,124,255,.3);box-shadow:0 28px 90px rgba(0,0,0,.42),0 0 45px rgba(100,80,220,.08)}
+#dashboard>h1{background:linear-gradient(95deg,#fff,#b9adff 55%,#70e5d6);-webkit-background-clip:text;background-clip:text;color:transparent}
+.panel{background:linear-gradient(145deg,rgba(31,31,59,.96),rgba(19,29,46,.98));border:1px solid rgba(160,148,255,.2);box-shadow:0 16px 42px rgba(0,0,0,.2)}
+#dashboard .panel .panel{background:rgba(9,13,30,.4);border-color:rgba(139,124,255,.16)}
+p{color:#b9bad2}
+label{color:#e2defd}
+input,select,textarea,.module-field input,.module-field select,.module-field textarea{background:#101426;border:1px solid #464366;color:#f8f6ff;border-radius:12px}
+input:focus,select:focus,textarea:focus{border-color:#9b8cff;box-shadow:0 0 0 3px rgba(139,124,255,.18)}
+button{background:linear-gradient(105deg,#8876ff,#42d8c7);color:#101326;box-shadow:0 8px 24px rgba(113,102,255,.2);border-radius:12px}
+button:hover{box-shadow:0 12px 30px rgba(113,102,255,.3)}
+button.secondary,.module-tab{background:#292844;color:#eeeaff;border:1px solid rgba(169,157,255,.18);box-shadow:none}
+.module-tabs{background:rgba(20,20,42,.94);border-bottom:1px solid rgba(139,124,255,.18)}
+.module-tab.active{background:linear-gradient(105deg,#8876ff,#42d8c7);color:#101326}
+.status{background:linear-gradient(110deg,rgba(87,72,166,.24),rgba(35,133,125,.16));border:1px solid rgba(139,124,255,.2);border-radius:14px;color:#eeedff}
+.module-record{background:linear-gradient(120deg,rgba(16,21,42,.92),rgba(22,34,49,.92));border:1px solid rgba(139,124,255,.18);border-radius:14px}
+.module-record strong{color:#fff}
+.record-id{margin-top:7px;padding:5px 8px;border-radius:7px;background:rgba(139,124,255,.12);color:#c9c0ff;font:11px ui-monospace,monospace;overflow-wrap:anywhere}
+#companyDetails{white-space:pre-line}
+#logoutBtn{background:linear-gradient(105deg,#393452,#263d4a);color:#f2efff;border:1px solid rgba(169,157,255,.2)}
+@media(max-width:640px){main{padding:0 12px}#dashboard{padding:16px}.panel{padding:17px}}
+
 </style>
 </head>
 
@@ -446,6 +473,7 @@ function showDashboard(tenant, tenantId) {
 
   $('companyDetails').textContent =
     'Company: ' + tenant.name +
+    '\nCompany ID: ' + currentTenantId +
     '\nCountry: ' + (tenant.country || '-') +
     '\nIndustry: ' + (tenant.industry || '-') +
     '\nLanguage: ' + (tenant.preferred_language || '-') +
@@ -1031,6 +1059,12 @@ async function loadWorkspaceRecords(moduleKey) {
     const title = document.createElement('strong');
     title.textContent = String(record[config.titleField] ?? config.title);
     card.appendChild(title);
+    if (record.id) {
+      const idLine = document.createElement('div');
+      idLine.className = 'record-id';
+      idLine.textContent = 'ID: ' + String(record.id);
+      card.appendChild(idLine);
+    }
     config.detailFields.forEach(key => {
       const value = record[key];
       if (value === null || value === undefined || value === '') return;
