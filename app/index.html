@@ -153,6 +153,17 @@ button.secondary,.module-tab{background:#292844;color:#eeeaff;border:1px solid r
 #logoutBtn{background:linear-gradient(105deg,#393452,#263d4a);color:#f2efff;border:1px solid rgba(169,157,255,.2)}
 @media(max-width:640px){main{padding:0 12px}#dashboard{padding:16px}.panel{padding:17px}}
 
+
+/* Final usability polish: compact embed code, copyable IDs, clear dates */
+.embed-code{width:100%;min-height:64px;max-height:104px;resize:vertical;overflow:auto;padding:12px;border:1px solid rgba(139,124,255,.24);border-radius:12px;background:#0d1224;color:#dcd7ff;font:12px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
+.embed-code:placeholder-shown{min-height:58px;max-height:58px;resize:none;color:#85839f}
+.record-id{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;padding:6px 8px;border-radius:9px;background:rgba(139,124,255,.1);color:#c9c0ff;font:11px ui-monospace,monospace}
+.record-id span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.record-id-copy{flex:0 0 auto;min-height:27px;padding:5px 9px;border-radius:7px;background:rgba(139,124,255,.2);border:1px solid rgba(169,157,255,.2);color:#e8e2ff;font:11px system-ui;box-shadow:none}
+.record-id-copy:hover{background:rgba(139,124,255,.34);transform:none;box-shadow:none}
+#subscriptionStatus{direction:ltr;text-align:left;unicode-bidi:plaintext;line-height:1.65;font-variant-numeric:tabular-nums}
+@media(max-width:640px){.embed-code{font-size:11px}.record-id{align-items:flex-start}.record-id-copy{font-size:10px}}
+
 </style>
 </head>
 
@@ -311,7 +322,7 @@ button.secondary,.module-tab{background:#292844;color:#eeeaff;border:1px solid r
     <button id="saveWidgetSettingsBtn" type="button">Save widget settings</button>
     <div id="widgetSettingsStatus" class="status" role="status">Loading your private assistant…</div>
     <label for="widgetEmbedCode">Website embed code</label>
-    <textarea id="widgetEmbedCode" rows="3" readonly style="width:100%;padding:12px;border-radius:9px;border:1px solid #43536a;background:#101827;color:white;font:13px monospace" placeholder="Save your website origin to generate the embed code."></textarea>
+    <textarea id="widgetEmbedCode" class="embed-code" rows="2" readonly aria-label="Website embed code" placeholder="Your embed code will appear here after saving a website origin."></textarea>
     <button id="copyWidgetCodeBtn" type="button" class="secondary">Copy embed code</button>
   </section>
 
@@ -794,8 +805,13 @@ async function loadSubscription() {
     : null;
   const trialActive = trialEnd && trialEnd.getTime() > Date.now();
   if (trialActive) {
+    const formattedTrialEnd = new Intl.DateTimeFormat('en-GB', {
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+      timeZone: 'Africa/Algiers'
+    }).format(trialEnd);
     $('subscriptionStatus').textContent =
-      'Free trial active until: ' + trialEnd.toLocaleString() +
+      'Free trial active until: ' + formattedTrialEnd + ' (Algeria time)' +
       '\nYou have 7 days from account signup. After expiry, AI and workspace features are locked until a subscription is active.';
   } else if (!hasAccess) {
     $('subscriptionStatus').textContent =
@@ -1062,7 +1078,25 @@ async function loadWorkspaceRecords(moduleKey) {
     if (record.id) {
       const idLine = document.createElement('div');
       idLine.className = 'record-id';
-      idLine.textContent = 'ID: ' + String(record.id);
+      const fullId = String(record.id);
+      const shortId = fullId.length > 20 ? fullId.slice(0, 8) + '…' + fullId.slice(-8) : fullId;
+      const idLabel = document.createElement('span');
+      idLabel.textContent = 'ID: ' + shortId;
+      idLine.appendChild(idLabel);
+      const copyIdBtn = document.createElement('button');
+      copyIdBtn.type = 'button';
+      copyIdBtn.className = 'record-id-copy';
+      copyIdBtn.textContent = 'Copy ID';
+      copyIdBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(fullId);
+          copyIdBtn.textContent = 'Copied';
+          setTimeout(() => { copyIdBtn.textContent = 'Copy ID'; }, 1600);
+        } catch (_) {
+          copyIdBtn.textContent = 'Copy unavailable';
+        }
+      });
+      idLine.appendChild(copyIdBtn);
       card.appendChild(idLine);
     }
     config.detailFields.forEach(key => {
