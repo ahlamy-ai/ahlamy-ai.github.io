@@ -83,6 +83,49 @@ button:disabled{opacity:.5}
 
 a{color:#7dd3fc;cursor:pointer}
 footer{text-align:center;color:#8291a5;padding:30px}
+
+/* AHLAMY dashboard visual refresh */
+:root{color-scheme:dark;--bg:#0b1220;--surface:#121f32;--surface2:#172941;--line:rgba(148,163,184,.18);--muted:#a8b8cc;--accent:#55c7f4;--accent2:#8b7cf6}
+body{background:radial-gradient(ellipse at 12% 0%,rgba(38,117,168,.18),transparent 38%),radial-gradient(ellipse at 88% 12%,rgba(105,83,190,.14),transparent 34%),var(--bg);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:.005em}
+header{position:sticky;top:0;z-index:30;padding:16px max(5%,calc((100% - 1120px)/2));background:rgba(11,18,32,.86);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
+.logo{font-size:26px;letter-spacing:.12em;color:#8bdcff;text-shadow:0 0 24px rgba(85,199,244,.25)}
+header span{font-size:12px;color:#b8c8dc;letter-spacing:.08em;text-transform:uppercase}
+main{max-width:1120px;margin:30px auto 56px;padding:0 24px}
+#dashboard{padding:30px;background:linear-gradient(145deg,rgba(23,41,65,.96),rgba(15,27,44,.98));border:1px solid rgba(130,164,202,.22);border-radius:24px;box-shadow:0 24px 70px rgba(0,0,0,.28)}
+#dashboard>h1{font-size:clamp(28px,4vw,38px);letter-spacing:-.035em;margin:4px 0 8px}
+#dashboard>p{font-size:15px;margin:0 0 18px}
+.panel{background:linear-gradient(145deg,rgba(25,43,66,.96),rgba(18,32,51,.98));border:1px solid var(--line);border-radius:20px;padding:clamp(18px,3vw,28px);margin-top:18px;box-shadow:0 12px 34px rgba(0,0,0,.12)}
+#dashboard>.panel{margin-top:18px}
+#dashboard .panel .panel{background:rgba(9,20,35,.34);border-color:rgba(148,163,184,.14);box-shadow:none}
+h1,h2,h3{letter-spacing:-.025em}
+h2{font-size:clamp(20px,2.4vw,25px);margin:0 0 12px}
+h3{font-size:17px}
+p{color:var(--muted)}
+label{font-size:13px;font-weight:650;color:#d6e4f4;margin:16px 0 8px}
+input,select,textarea,.module-field input,.module-field select,.module-field textarea{background:#0b1728;border:1px solid #344963;border-radius:11px;min-height:46px;padding:12px 14px;transition:border-color .18s,box-shadow .18s}
+textarea{min-height:110px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(85,199,244,.14)}
+button{border-radius:12px;background:linear-gradient(100deg,#42b9ed,#64d2f6);color:#062238;min-height:46px;padding:13px 18px;box-shadow:0 7px 18px rgba(40,170,220,.14);transition:transform .18s,filter .18s,box-shadow .18s}
+button:hover{filter:brightness(1.07);transform:translateY(-1px);box-shadow:0 10px 24px rgba(40,170,220,.2)}
+button:active{transform:translateY(0)}
+button.secondary,.module-tab{background:#263c57;color:#e6f1ff;box-shadow:none;border:1px solid rgba(148,163,184,.12)}
+.module-tabs{position:sticky;top:72px;z-index:15;padding:10px 0;background:rgba(18,31,50,.94);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);border-radius:0 0 12px 12px;gap:9px}
+.module-tab{border-radius:999px;padding:10px 16px;font-size:13px}
+.module-tab.active{background:linear-gradient(100deg,#42b9ed,#64d2f6);color:#062238;border-color:transparent}
+.status{background:rgba(42,65,91,.62);border:1px solid rgba(148,163,184,.12);border-radius:13px;padding:15px;color:#dcecff}
+.module-record{background:rgba(9,20,35,.55);border:1px solid rgba(148,163,184,.16);border-radius:13px;padding:15px}
+.module-record strong{font-size:15px;color:#f1f7ff}
+#logoutBtn{order:-1;align-self:flex-end;width:auto;min-height:38px;margin:0 0 8px;padding:9px 16px;border-radius:999px;font-size:13px}
+#dashboard{display:flex;flex-direction:column}
+#dashboard>h1,#dashboard>p,#companyDetails{order:0}
+#dashboard>.panel,#workspaceModules{order:1}
+#dashboard>#logoutBtn{order:-1}
+footer{padding:24px;color:#71849d;font-size:12px}
+a{color:#7ddcff}
+@media(min-width:900px){#dashboard{padding:34px}#workspaceModules{scroll-margin-top:90px}.module-form{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){header{padding:14px 18px}.logo{font-size:22px}header span{font-size:10px}main{margin:16px auto 34px;padding:0 12px}#dashboard{padding:15px;border-radius:18px}.panel{padding:17px;border-radius:16px}.module-tabs{top:62px;overflow-x:auto;flex-wrap:nowrap;padding:10px 0}.module-tab{flex:0 0 auto;font-size:12px;padding:9px 13px}.module-form{grid-template-columns:1fr}.module-form button{max-width:none}#logoutBtn{margin-bottom:5px}#dashboard>h1{font-size:27px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
+
 </style>
 </head>
 
