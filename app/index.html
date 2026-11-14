@@ -164,6 +164,12 @@ button.secondary,.module-tab{background:#292844;color:#eeeaff;border:1px solid r
 #subscriptionStatus{direction:ltr;text-align:left;unicode-bidi:plaintext;line-height:1.65;font-variant-numeric:tabular-nums}
 @media(max-width:640px){.embed-code{font-size:11px}.record-id{align-items:flex-start}.record-id-copy{font-size:10px}}
 
+
+/* Ensure the record ID copy action remains visible on narrow screens */
+.record-id{display:flex!important;flex-wrap:wrap!important;align-items:center!important;justify-content:space-between!important;gap:8px!important;overflow:visible!important}
+.record-id span{flex:1 1 150px!important;min-width:0!important}
+.record-id .record-id-copy{display:inline-flex!important;visibility:visible!important;opacity:1!important;flex:0 0 auto!important;width:auto!important;margin:0!important}
+
 </style>
 </head>
 
@@ -1082,19 +1088,38 @@ async function loadWorkspaceRecords(moduleKey) {
       const shortId = fullId.length > 20 ? fullId.slice(0, 8) + '…' + fullId.slice(-8) : fullId;
       const idLabel = document.createElement('span');
       idLabel.textContent = 'ID: ' + shortId;
+      idLabel.title = fullId;
       idLine.appendChild(idLabel);
       const copyIdBtn = document.createElement('button');
       copyIdBtn.type = 'button';
       copyIdBtn.className = 'record-id-copy';
       copyIdBtn.textContent = 'Copy ID';
+      copyIdBtn.setAttribute('aria-label', 'Copy full record ID');
+      copyIdBtn.style.cssText = 'display:inline-flex!important;visibility:visible!important;opacity:1!important;position:static!important;flex:0 0 auto!important;width:auto!important;min-width:76px!important;max-width:none!important;margin:0!important;padding:7px 10px!important;border-radius:8px!important;font-size:11px!important;line-height:1.2!important;white-space:nowrap!important;cursor:pointer!important;';
       copyIdBtn.addEventListener('click', async () => {
+        const originalText = 'Copy ID';
         try {
-          await navigator.clipboard.writeText(fullId);
-          copyIdBtn.textContent = 'Copied';
-          setTimeout(() => { copyIdBtn.textContent = 'Copy ID'; }, 1600);
+          if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(fullId);
+          } else {
+            const temp = document.createElement('textarea');
+            temp.value = fullId;
+            temp.setAttribute('readonly', '');
+            temp.style.position = 'fixed';
+            temp.style.opacity = '0';
+            document.body.appendChild(temp);
+            temp.select();
+            const copied = document.execCommand('copy');
+            temp.remove();
+            if (!copied) throw new Error('Copy command unavailable');
+          }
+          copyIdBtn.textContent = 'Copied ✓';
         } catch (_) {
-          copyIdBtn.textContent = 'Copy unavailable';
+          copyIdBtn.textContent = 'Select ID';
+          idLabel.textContent = 'ID: ' + fullId;
+          idLabel.style.userSelect = 'all';
         }
+        setTimeout(() => { copyIdBtn.textContent = originalText; }, 1800);
       });
       idLine.appendChild(copyIdBtn);
       card.appendChild(idLine);
