@@ -857,7 +857,7 @@ const workspaceModuleConfig = {
       {name:'start_time',label:'Start time',type:'datetime-local',required:true},
       {name:'end_time',label:'End time',type:'datetime-local'},
       {name:'status',label:'Status',type:'select',options:['pending','confirmed','completed','cancelled']},
-      {name:'customer_id',label:'Customer ID (optional)'},
+      {name:'customer_id',label:'Customer (optional)',type:'customer-select'},
       {name:'branch_id',label:'Branch ID (optional)'}
     ],
     titleField: 'booking_type',
@@ -888,6 +888,12 @@ function createModuleField(field) {
   let input;
   if (field.type === 'textarea') {
     input = document.createElement('textarea');
+  } else if (field.type === 'customer-select') {
+    input = document.createElement('select');
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = 'No customer linked';
+    input.appendChild(placeholder);
   } else if (field.type === 'select') {
     input = document.createElement('select');
     (field.options || []).forEach(value => {
@@ -918,6 +924,7 @@ function renderWorkspaceModule(moduleKey) {
   $('moduleHeading').appendChild(heading);
   $('moduleForm').replaceChildren();
   config.fields.forEach(field => $('moduleForm').appendChild(createModuleField(field)));
+  if (moduleKey === 'bookings') loadBookingCustomerOptions();
   const submit = document.createElement('button');
   submit.type = 'submit';
   submit.textContent = 'Add ' + config.title.replace(/s$/, '');
@@ -927,6 +934,34 @@ function renderWorkspaceModule(moduleKey) {
   });
   $('moduleStatus').classList.add('hidden');
   loadWorkspaceRecords(moduleKey);
+}
+
+async function loadBookingCustomerOptions() {
+  const select = $('module-customer_id');
+  if (!select || !currentTenantId) return;
+  select.disabled = true;
+  const {data, error} = await supabase.from('customers')
+    .select('id,name')
+    .eq('tenant_id', currentTenantId)
+    .order('name', {ascending:true})
+    .limit(200);
+  if (error) {
+    const option = document.createElement('option');
+    option.value = '';
+    option.textContent = 'Could not load customers';
+    select.appendChild(option);
+    $('moduleStatus').textContent = 'Could not load customers: ' + error.message;
+    $('moduleStatus').classList.remove('hidden');
+    select.disabled = false;
+    return;
+  }
+  (data || []).forEach(customer => {
+    const option = document.createElement('option');
+    option.value = customer.id;
+    option.textContent = customer.name;
+    select.appendChild(option);
+  });
+  select.disabled = false;
 }
 
 async function loadWorkspaceRecords(moduleKey) {
