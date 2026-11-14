@@ -170,6 +170,20 @@ button.secondary,.module-tab{background:#292844;color:#eeeaff;border:1px solid r
 .record-id span{flex:1 1 150px!important;min-width:0!important}
 .record-id .record-id-copy{display:inline-flex!important;visibility:visible!important;opacity:1!important;flex:0 0 auto!important;width:auto!important;margin:0!important}
 
+
+/* AHLAMY multilingual continuous announcement ticker */
+.ahlamy-ticker{display:flex;align-items:center;width:100%;height:43px;background:#050505;color:#fff;border-bottom:1px solid rgba(255,255,255,.2);overflow:hidden}
+.ticker-label{position:relative;z-index:2;flex:0 0 auto;height:100%;display:flex;align-items:center;padding:0 13px;background:#fff;color:#050505;font-size:10px;font-weight:800;letter-spacing:1.1px;white-space:nowrap}
+.ticker-window{flex:1;min-width:0;overflow:hidden}
+.ticker-track{display:flex;width:max-content;animation:ahlamyTickerMove 58s linear infinite;will-change:transform}
+.ticker-group{display:flex;align-items:center;flex:0 0 auto;gap:26px;padding-right:26px;white-space:nowrap;font-size:12px;font-weight:600}
+.ticker-group [lang="ar"]{font-size:13px}
+.ticker-separator{color:#b8a8ff;font-size:14px}
+.ahlamy-ticker:hover .ticker-track{animation-play-state:paused}
+@keyframes ahlamyTickerMove{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media(prefers-reduced-motion:reduce){.ticker-track{animation:none}.ticker-window{overflow-x:auto}.ticker-group[aria-hidden="true"]{display:none}}
+@media(max-width:640px){.ahlamy-ticker{height:40px}.ticker-label{padding:0 9px;font-size:9px}.ticker-group{font-size:11px;gap:18px}.ticker-group [lang="ar"]{font-size:12px}}
+
 </style>
 </head>
 
@@ -179,6 +193,22 @@ button.secondary,.module-tab{background:#292844;color:#eeeaff;border:1px solid r
   <div class="logo">AHLAMY</div>
   <span>Universal AI Platform</span>
 </header>
+
+<div class="ahlamy-ticker" role="region" aria-label="AHLAMY introduction">
+  <span class="ticker-label">AHLAMY • INFO</span>
+  <div class="ticker-window"><div class="ticker-track">
+    <div class="ticker-group">
+      <span lang="ar" dir="rtl">أحلامي AHLAMY — منصة عالمية للمساعدين الذكيين، تساعد الشركات على تحسين التواصل مع العملاء وتسهيل خدماتها الرقمية بالذكاء الاصطناعي.</span><span class="ticker-separator">✦</span>
+      <span lang="fr">AHLAMY — Une plateforme mondiale d’assistants IA pour aider les entreprises à améliorer la communication client et simplifier leurs services numériques.</span><span class="ticker-separator">✦</span>
+      <span lang="en">AHLAMY — A universal AI assistant platform helping businesses improve customer communication and simplify digital services.</span><span class="ticker-separator">✦</span>
+    </div>
+    <div class="ticker-group" aria-hidden="true">
+      <span lang="ar" dir="rtl">أحلامي AHLAMY — منصة عالمية للمساعدين الذكيين، تساعد الشركات على تحسين التواصل مع العملاء وتسهيل خدماتها الرقمية بالذكاء الاصطناعي.</span><span class="ticker-separator">✦</span>
+      <span lang="fr">AHLAMY — Une plateforme mondiale d’assistants IA pour aider les entreprises à améliorer la communication client et simplifier leurs services numériques.</span><span class="ticker-separator">✦</span>
+      <span lang="en">AHLAMY — A universal AI assistant platform helping businesses improve customer communication and simplify digital services.</span><span class="ticker-separator">✦</span>
+    </div>
+  </div></div>
+</div>
 
 <main>
 
