@@ -99,6 +99,9 @@ footer{text-align:center;color:#8291a5;padding:30px}
   <h1>Welcome to Ahlamy</h1>
   <p>One intelligent platform for businesses worldwide.</p>
 
+  <div id="turnstileWidget" style="margin-top:16px"></div>
+  <p class="small">Complete the security check before signing in or creating an account.</p>
+
   <div id="loginForm">
     <h2>Sign in</h2>
 
@@ -128,9 +131,6 @@ footer{text-align:center;color:#8291a5;padding:30px}
 
     <label>Password (minimum 8 characters)</label>
     <input id="signupPassword" type="password" autocomplete="new-password">
-
-    <div id="turnstileWidget" style="margin-top:16px"></div>
-    <p class="small">Complete the security check before creating your account.</p>
 
     <button id="signupBtn">Create account</button>
 
@@ -459,6 +459,7 @@ $('showLogin').addEventListener('click', () => {
   $('resetForm').classList.add('hidden');
   $('loginForm').classList.remove('hidden');
   $('authStatus').classList.add('hidden');
+  renderSignupTurnstile();
 });
 
 // Password recovery: request a reset link on a dedicated screen.
@@ -532,12 +533,17 @@ $('loginBtn').addEventListener('click', async () => {
     return;
   }
 
+  if (!turnstileToken) {
+    showMessage('authStatus','Please complete the security check before signing in.');
+    return;
+  }
+
   $('loginBtn').disabled = true;
   $('loginBtn').textContent = 'Signing in...';
 
   try {
     const { data, error } = await supabase.auth
-      .signInWithPassword({ email, password });
+      .signInWithPassword({ email, password, options: { captchaToken: turnstileToken } });
 
     if (error) throw error;
 
@@ -546,6 +552,10 @@ $('loginBtn').addEventListener('click', async () => {
   } catch (error) {
     showMessage('authStatus',error.message);
   } finally {
+    turnstileToken = '';
+    if (window.turnstile && turnstileWidgetId !== null) {
+      window.turnstile.reset(turnstileWidgetId);
+    }
     $('loginBtn').disabled = false;
     $('loginBtn').textContent = 'Sign in';
   }
@@ -1290,8 +1300,9 @@ async function startApp() {
     if (mode === 'signup') {
       $('loginForm').classList.add('hidden');
       $('signupForm').classList.remove('hidden');
-      // The direct signup URL must initialize Turnstile just like the
-      // "Create an account" link does; otherwise signup is blocked.
+      // The shared Turnstile challenge is required for both sign-in and signup.
+      await renderSignupTurnstile();
+    } else {
       await renderSignupTurnstile();
     }
   }
