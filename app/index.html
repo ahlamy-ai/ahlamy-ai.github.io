@@ -333,8 +333,8 @@ button.secondary,.module-tab{background:#292844;color:#eeeaff;border:1px solid r
         <option value="business_year">Business — €2,988 / year</option>
       </select>
       <p class="small">All prices are in EUR. Three-month and yearly subscriptions are billed upfront for the selected period.</p>
-      <button id="subscribeBtn" type="button" disabled>Online payments coming soon</button>
-      <p class="small">We're preparing secure online subscriptions. For subscription enquiries, contact <a href="mailto:contact.ahlamy@gmail.com">AHLAMY support</a>.</p>
+      <button id="subscribeBtn" type="button" disabled>Available after free trial</button>
+      <p class="small">Your 7-day free trial comes first. Secure online checkout is being finalized; no payment will be taken while checkout is unavailable. For help, contact <a href="mailto:contact.ahlamy@gmail.com">AHLAMY support</a>.</p>
     </div>
     <div id="billingStatus" class="status hidden" role="status"></div>
   </div>
@@ -840,7 +840,10 @@ async function loadSubscription() {
     ? new Date(entitlement.trial_ends_at)
     : null;
   const trialActive = trialEnd && trialEnd.getTime() > Date.now();
+  // Keep checkout disabled until Sandbox checkout and webhook tests pass.
+  $('subscribeBtn').disabled = true;
   if (trialActive) {
+    $('subscribeBtn').textContent = 'Available after free trial';
     const formattedTrialEnd = new Intl.DateTimeFormat('en-GB', {
       day: '2-digit', month: 'short', year: 'numeric',
       hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
@@ -850,9 +853,11 @@ async function loadSubscription() {
       'Free trial active until: ' + formattedTrialEnd + ' (Algeria time)' +
       '\nYou have 7 days from account signup. After expiry, AI and workspace features are locked until a subscription is active.';
   } else if (!hasAccess) {
+    $('subscribeBtn').textContent = 'Secure checkout coming soon';
     $('subscriptionStatus').textContent =
-      'Your free trial has ended. AI, website assistant and workspace features are locked. Your account and this billing page remain accessible.';
+      'Your 7-day free trial has ended. AI, website assistant and workspace features are locked until a paid subscription is activated. Secure checkout is not available yet; please contact AHLAMY support.';
   } else {
+    $('subscribeBtn').textContent = 'Subscription active';
     $('subscriptionStatus').textContent =
       'Subscription access active' +
       (entitlement.subscription_status ? ' — ' + entitlement.subscription_status : '') +
