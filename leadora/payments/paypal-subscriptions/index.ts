@@ -116,7 +116,20 @@ async function paypalApi(path: string, method = "GET", body?: unknown, requestId
   let data: any = null;
   try { data = raw ? JSON.parse(raw) : null; } catch { data = null; }
   if (!response.ok) {
-    console.error("PayPal Sandbox API error", response.status, data?.name || "unknown", data?.debug_id || "");
+    const detailSummary = Array.isArray(data?.details)
+      ? data.details.slice(0, 8).map((item: any) => ({
+        field: item.field || null,
+        issue: item.issue || null,
+        description: item.description || null,
+      }))
+      : [];
+    console.error(
+      "PayPal Sandbox API error",
+      response.status,
+      data?.name || "unknown",
+      data?.debug_id || "",
+      JSON.stringify(detailSummary),
+    );
     throw new Error("PAYPAL_API_" + response.status + "_" + (data?.name || "ERROR"));
   }
   return data;
@@ -192,25 +205,45 @@ async function ensureCatalog() {
 
   if (!config.webhook_id) {
     try {
+      const availableEvents = await paypalApi("/v1/notifications/webhooks-event-types", "GET");
+      const availableNames = new Set(
+        (availableEvents?.event_types || [])
+          .map((event: any) => event.name)
+          .filter((name: unknown): name is string => typeof name === "string"),
+      );
+      const requestedNames = [
+        "BILLING.SUBSCRIPTION.CREATED",
+        "BILLING.SUBSCRIPTION.ACTIVATED",
+        "BILLING.SUBSCRIPTION.UPDATED",
+        "BILLING.SUBSCRIPTION.CANCELLED",
+        "BILLING.SUBSCRIPTION.SUSPENDED",
+        "BILLING.SUBSCRIPTION.EXPIRED",
+        "BILLING.SUBSCRIPTION.PAYMENT.FAILED",
+        "BILLING.SUBSCRIPTION.PAYMENT.SUCCEEDED",
+        "PAYMENT.SALE.COMPLETED",
+        "PAYMENT.SALE.REFUNDED",
+        "PAYMENT.SALE.REVERSED",
+      ];
+      const eventTypes = requestedNames
+        .filter((name) => availableNames.has(name))
+        .map((name) => ({ name }));
+      const requiredEvents = [
+        "BILLING.SUBSCRIPTION.ACTIVATED",
+        "BILLING.SUBSCRIPTION.CANCELLED",
+        "BILLING.SUBSCRIPTION.PAYMENT.FAILED",
+      ];
+      if (requiredEvents.some((name) => !availableNames.has(name))) {
+        throw new Error("PAYPAL_WEBHOOK_REQUIRED_EVENTS_UNAVAILABLE");
+      }
+
       const webhook = await paypalApi(
         "/v1/notifications/webhooks",
         "POST",
         {
           url: FUNCTION_URL,
-          event_types: [
-            "BILLING.SUBSCRIPTION.ACTIVATED",
-            "BILLING.SUBSCRIPTION.UPDATED",
-            "BILLING.SUBSCRIPTION.CANCELLED",
-            "BILLING.SUBSCRIPTION.SUSPENDED",
-            "BILLING.SUBSCRIPTION.EXPIRED",
-            "BILLING.SUBSCRIPTION.PAYMENT.FAILED",
-            "BILLING.SUBSCRIPTION.PAYMENT.SUCCEEDED",
-            "PAYMENT.SALE.COMPLETED",
-            "PAYMENT.SALE.REFUNDED",
-            "PAYMENT.SALE.REVERSED",
-          ].map((name) => ({ name })),
+          event_types: eventTypes,
         },
-        "LEADORA-SBX-WEBHOOK-V1",
+        "LEADORA-SBX-WEBHOOK-V2",
       );
       config.webhook_id = webhook.id;
       await saveConfig(config);
