@@ -1,6 +1,9 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
-const PAYPAL_BASE = "https://api-m.sandbox.paypal.com";
+const PAYPAL_ENV = (Deno.env.get("PAYPAL_ENV") || "sandbox").toLowerCase() === "live" ? "live" : "sandbox";
+const PAYPAL_BASE = PAYPAL_ENV === "live"
+  ? "https://api-m.paypal.com"
+  : "https://api-m.sandbox.paypal.com";
 const SITE_ORIGIN = "https://ahlamy-ai.github.io";
 const CURRENCY = "EUR";
 const PLANS = {
@@ -53,8 +56,10 @@ async function authenticate(req: Request): Promise<string | null> {
   return typeof user.id === "string" ? user.id : null;
 }
 async function paypalToken(): Promise<string> {
-  const clientId = Deno.env.get("PAYPAL_CLIENT_ID"), secret = Deno.env.get("PAYPAL_CLIENT_SECRET");
-  if (!clientId || !secret) throw new Error("PAYPAL_SANDBOX_CREDENTIALS_MISSING");
+  const credentialPrefix = PAYPAL_ENV === "live" ? "PAYPAL_LIVE_" : "PAYPAL_";
+  const clientId = Deno.env.get(credentialPrefix + "CLIENT_ID");
+  const secret = Deno.env.get(credentialPrefix + "CLIENT_SECRET");
+  if (!clientId || !secret) throw new Error("PAYPAL_" + PAYPAL_ENV.toUpperCase() + "_CREDENTIALS_MISSING");
   const response = await fetch(PAYPAL_BASE + "/v1/oauth2/token", {
     method: "POST", headers: { Authorization: "Basic " + btoa(clientId + ":" + secret), "Content-Type": "application/x-www-form-urlencoded" }, body: "grant_type=client_credentials",
   });
@@ -111,11 +116,13 @@ Deno.serve(async (req: Request) => {
   try { input = await req.json(); } catch { return reply({ error: "Invalid JSON" }, 400); }
   try {
     if (input.action === "bootstrap") {
-      const clientId = Deno.env.get("PAYPAL_CLIENT_ID");
-      if (!clientId) return reply({ error: "Sandbox checkout is not configured." }, 503);
-      return reply({ mode: "sandbox", clientId, currency: CURRENCY, billingType: "one_time_monthly" });
+      const credentialPrefix = PAYPAL_ENV === "live" ? "PAYPAL_LIVE_" : "PAYPAL_";
+      const clientId = Deno.env.get(credentialPrefix + "CLIENT_ID");
+      if (!clientId) return reply({ error: "PayPal " + PAYPAL_ENV + " checkout is not configured." }, 503);
+      return reply({ mode: PAYPAL_ENV, clientId, currency: CURRENCY, billingType: "one_time_monthly" });
     }
     if (input.action === "card-token") {
+      if (PAYPAL_ENV === "live") return reply({ error: "Hosted card fields are not enabled for this merchant country." }, 409);
       const clientToken = await paypalClientToken();
       return reply({ clientToken });
     }
@@ -163,9 +170,9 @@ Deno.serve(async (req: Request) => {
     return reply({ error: "Unknown payment action." }, 400);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unexpected checkout error";
-    const safe = message.includes("CREDENTIALS_MISSING") ? "PayPal Sandbox credentials are missing."
-      : message.includes("AUTH_FAILED") ? "PayPal Sandbox authentication failed."
-      : message.startsWith("PAYPAL_API_") ? "PayPal Sandbox could not complete this checkout. Check the seller Sandbox account."
+    const safe = message.includes("CREDENTIALS_MISSING") ? "PayPal " + PAYPAL_ENV + " credentials are missing."
+      : message.includes("AUTH_FAILED") ? "PayPal " + PAYPAL_ENV + " authentication failed."
+      : message.startsWith("PAYPAL_API_") ? "PayPal " + PAYPAL_ENV + " could not complete this checkout. Check the merchant account and payment settings."
       : message.includes("SUPABASE") ? "Secure payment storage is not configured."
       : "The payment request could not be completed.";
     console.error("LEADORA one-time checkout failed", message);
