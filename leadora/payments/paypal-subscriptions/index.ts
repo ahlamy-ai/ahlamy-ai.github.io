@@ -184,6 +184,10 @@ async function ensureCatalog() {
       config[field] = plan.id;
       await saveConfig(config);
     }
+    const planDetails = await paypalApi("/v1/billing/plans/" + encodeURIComponent(config[field]), "GET");
+    if (planDetails.status !== "ACTIVE") {
+      await paypalApi("/v1/billing/plans/" + encodeURIComponent(config[field]) + "/activate", "POST", {});
+    }
   }
 
   if (!config.webhook_id) {
@@ -200,6 +204,7 @@ async function ensureCatalog() {
             "BILLING.SUBSCRIPTION.SUSPENDED",
             "BILLING.SUBSCRIPTION.EXPIRED",
             "BILLING.SUBSCRIPTION.PAYMENT.FAILED",
+            "BILLING.SUBSCRIPTION.PAYMENT.SUCCEEDED",
             "PAYMENT.SALE.COMPLETED",
             "PAYMENT.SALE.REFUNDED",
             "PAYMENT.SALE.REVERSED",
@@ -246,9 +251,9 @@ async function handleWebhook(req: Request, rawBody: string) {
   let subscriptionId = resource.id || null;
   let patch: Record<string, unknown> = {};
 
-  if (type === "PAYMENT.SALE.COMPLETED") {
-    subscriptionId = resource.billing_agreement_id || resource.subscription_id || null;
-    patch = { last_payment_at: resource.create_time || new Date().toISOString(), status: "ACTIVE" };
+  if (type === "PAYMENT.SALE.COMPLETED" || type === "BILLING.SUBSCRIPTION.PAYMENT.SUCCEEDED") {
+    subscriptionId = resource.billing_agreement_id || resource.subscription_id || resource.id || null;
+    patch = { last_payment_at: resource.create_time || event.create_time || new Date().toISOString(), status: "ACTIVE" };
   } else if (type === "PAYMENT.SALE.REFUNDED" || type === "PAYMENT.SALE.REVERSED") {
     subscriptionId = resource.billing_agreement_id || resource.subscription_id || null;
     patch = { status: "PAYMENT_FAILED" };
@@ -388,12 +393,42 @@ Deno.serve(async (req: Request) => {
       return reply({ success: true, status: sub.status, plan: planEntry });
     }
 
+    if (input.action === "eligibility") {
+      const rows = await dbRequest(
+        "lead_subscriptions?user_id=eq." + encodeURIComponent(userId) +
+        "&status=in.(ACTIVE,APPROVED,APPROVAL_PENDING)&select=paypal_subscription_id,plan_key,status&limit=1",
+        "GET",
+      );
+      return reply({ allowed: !rows?.length, existing: rows?.[0] || null });
+    }
+
     if (input.action === "status") {
       const rows = await dbRequest(
         "lead_subscriptions?user_id=eq." + encodeURIComponent(userId) + "&select=paypal_subscription_id,plan_key,status,amount,currency,started_at,next_billing_at,last_payment_at,cancelled_at,created_at&order=created_at.desc&limit=10",
         "GET",
       );
-      return reply({ subscriptions: rows || [] });
+      const refreshed = [];
+      for (const row of rows || []) {
+        try {
+          const current = await paypalApi("/v1/billing/subscriptions/" + encodeURIComponent(row.paypal_subscription_id), "GET");
+          const next = {
+            status: current.status || row.status,
+            next_billing_at: current.billing_info?.next_billing_time || null,
+            updated_at: new Date().toISOString(),
+          };
+          await dbRequest(
+            "lead_subscriptions?paypal_subscription_id=eq." + encodeURIComponent(row.paypal_subscription_id),
+            "PATCH",
+            next,
+            "return=minimal",
+          );
+          refreshed.push({ ...row, ...next });
+        } catch (error) {
+          console.error("Subscription status refresh failed", row.paypal_subscription_id, error);
+          refreshed.push(row);
+        }
+      }
+      return reply({ subscriptions: refreshed });
     }
 
     if (input.action === "cancel") {
