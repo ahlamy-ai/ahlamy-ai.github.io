@@ -103,7 +103,7 @@ Deno.serve(async (req: Request) => {
         intent: "CAPTURE",
         purchase_units: [{ custom_id: userId + ":" + plan, invoice_id: "LD-" + crypto.randomUUID(), description: "LEADORA AI " + selected.label + " plan — 30 days access", amount: { currency_code: CURRENCY, value: selected.amount } }],
         application_context: { brand_name: "LEADORA AI", user_action: "PAY_NOW", shipping_preference: "NO_SHIPPING" },
-      }, "LD-ORDER-" + crypto.randomUUID());
+      }, crypto.randomUUID());
       return reply({ id: order.id });
     }
     if (input.action === "capture-order") {
