@@ -101,7 +101,7 @@ Deno.serve(async (req: Request) => {
       if (!selected) return reply({ error: "Choose a valid LEADORA plan." }, 400);
       const order = await paypalApi("/v2/checkout/orders", "POST", {
         intent: "CAPTURE",
-        purchase_units: [{ custom_id: userId + ":" + plan, invoice_id: "LD-" + crypto.randomUUID(), description: "LEADORA AI " + selected.label + " plan — 30 days access", amount: { currency_code: CURRENCY, value: selected.amount } }],
+        purchase_units: [{ custom_id: userId + ":" + plan, invoice_id: "LD-" + crypto.randomUUID(), description: "LEADORA AI " + selected.label + " plan — 30-day plan period", amount: { currency_code: CURRENCY, value: selected.amount } }],
         application_context: { brand_name: "LEADORA AI", user_action: "PAY_NOW", shipping_preference: "NO_SHIPPING" },
       }, crypto.randomUUID());
       return reply({ id: order.id });
