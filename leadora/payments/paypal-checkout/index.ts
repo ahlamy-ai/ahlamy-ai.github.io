@@ -1,9 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
-const PAYPAL_ENV = (Deno.env.get("PAYPAL_ENV") || "sandbox").toLowerCase() === "live" ? "live" : "sandbox";
-const PAYPAL_BASE = PAYPAL_ENV === "live"
-  ? "https://api-m.paypal.com"
-  : "https://api-m.sandbox.paypal.com";
+const PAYPAL_ENV = (Deno.env.get("PAYPAL_ENV") || "").trim().toLowerCase();
+const PAYPAL_BASE = "https://api-m.paypal.com";
 const SITE_ORIGIN = "https://ahlamy-ai.github.io";
 const CURRENCY = "EUR";
 const PLANS = {
@@ -56,34 +54,15 @@ async function authenticate(req: Request): Promise<string | null> {
   return typeof user.id === "string" ? user.id : null;
 }
 async function paypalToken(): Promise<string> {
-  const credentialPrefix = PAYPAL_ENV === "live" ? "PAYPAL_LIVE_" : "PAYPAL_";
-  const clientId = Deno.env.get(credentialPrefix + "CLIENT_ID");
-  const secret = Deno.env.get(credentialPrefix + "CLIENT_SECRET");
-  if (!clientId || !secret) throw new Error("PAYPAL_" + PAYPAL_ENV.toUpperCase() + "_CREDENTIALS_MISSING");
+  if (PAYPAL_ENV !== "live") throw new Error("PAYPAL_LIVE_MODE_REQUIRED");
+  const clientId = Deno.env.get("PAYPAL_LIVE_CLIENT_ID");
+  const secret = Deno.env.get("PAYPAL_LIVE_CLIENT_SECRET");
+  if (!clientId || !secret) throw new Error("PAYPAL_LIVE_CREDENTIALS_MISSING");
   const response = await fetch(PAYPAL_BASE + "/v1/oauth2/token", {
     method: "POST", headers: { Authorization: "Basic " + btoa(clientId + ":" + secret), "Content-Type": "application/x-www-form-urlencoded" }, body: "grant_type=client_credentials",
   });
   if (!response.ok) throw new Error("PAYPAL_AUTH_FAILED");
   return (await response.json()).access_token;
-}
-async function paypalClientToken(): Promise<string> {
-  const token = await paypalToken();
-  const response = await fetch(PAYPAL_BASE + "/v1/identity/generate-token", {
-    method: "POST",
-    headers: {
-      Authorization: "Bearer " + token,
-      "Accept-Language": "en_US",
-      "Content-Type": "application/json",
-    },
-  });
-  const raw = await response.text();
-  let data: any = null;
-  try { data = raw ? JSON.parse(raw) : null; } catch { data = null; }
-  if (!response.ok || typeof data?.client_token !== "string") {
-    console.error("PayPal Sandbox client token error", response.status, data?.name || "unknown");
-    throw new Error("PAYPAL_CLIENT_TOKEN_FAILED");
-  }
-  return data.client_token;
 }
 async function paypalApi(path: string, method = "GET", body?: unknown, requestId?: string) {
   const token = await paypalToken();
@@ -94,7 +73,7 @@ async function paypalApi(path: string, method = "GET", body?: unknown, requestId
   try { data = raw ? JSON.parse(raw) : null; } catch { data = null; }
   if (!response.ok) {
     const details = Array.isArray(data?.details) ? data.details.slice(0, 5).map((item: any) => ({ field: item.field || null, issue: item.issue || null })) : [];
-    console.error("PayPal Sandbox checkout error", response.status, data?.name || "unknown", JSON.stringify(details));
+    console.error("PayPal Live checkout error", response.status, data?.name || "unknown", JSON.stringify(details));
     throw new Error("PAYPAL_API_" + response.status);
   }
   return data;
@@ -115,16 +94,13 @@ Deno.serve(async (req: Request) => {
   let input: any;
   try { input = await req.json(); } catch { return reply({ error: "Invalid JSON" }, 400); }
   try {
+    if (PAYPAL_ENV !== "live") return reply({ error: "Live PayPal mode is not enabled. Set PAYPAL_ENV to live." }, 503);
     if (input.action === "bootstrap") {
-      const credentialPrefix = PAYPAL_ENV === "live" ? "PAYPAL_LIVE_" : "PAYPAL_";
-      const clientId = Deno.env.get(credentialPrefix + "CLIENT_ID");
-      if (!clientId) return reply({ error: "PayPal " + PAYPAL_ENV + " checkout is not configured." }, 503);
-      return reply({ mode: PAYPAL_ENV, clientId, currency: CURRENCY, billingType: "one_time_monthly" });
-    }
-    if (input.action === "card-token") {
-      if (PAYPAL_ENV === "live") return reply({ error: "Hosted card fields are not enabled for this merchant country." }, 409);
-      const clientToken = await paypalClientToken();
-      return reply({ clientToken });
+      const clientId = Deno.env.get("PAYPAL_LIVE_CLIENT_ID");
+      const secret = Deno.env.get("PAYPAL_LIVE_CLIENT_SECRET");
+      if (!clientId || !secret) return reply({ error: "Live PayPal credentials are not configured." }, 503);
+      await paypalToken();
+      return reply({ mode: "live", clientId, currency: CURRENCY, billingType: "one_time_monthly" });
     }
     if (input.action === "create-order") {
       const plan = String(input.plan || "").toLowerCase() as PlanKey, selected = PLANS[plan];
@@ -170,12 +146,13 @@ Deno.serve(async (req: Request) => {
     return reply({ error: "Unknown payment action." }, 400);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unexpected checkout error";
-    const safe = message.includes("CREDENTIALS_MISSING") ? "PayPal " + PAYPAL_ENV + " credentials are missing."
-      : message.includes("AUTH_FAILED") ? "PayPal " + PAYPAL_ENV + " authentication failed."
-      : message.startsWith("PAYPAL_API_") ? "PayPal " + PAYPAL_ENV + " could not complete this checkout. Check the merchant account and payment settings."
+    const safe = message.includes("CREDENTIALS_MISSING") ? "Live PayPal credentials are missing."
+      : message.includes("LIVE_MODE_REQUIRED") ? "Live PayPal mode is not enabled."
+      : message.includes("AUTH_FAILED") ? "Live PayPal authentication failed."
+      : message.startsWith("PAYPAL_API_") ? "Live PayPal could not complete this checkout. Check the merchant account and payment settings."
       : message.includes("SUPABASE") ? "Secure payment storage is not configured."
       : "The payment request could not be completed.";
-    console.error("LEADORA one-time checkout failed", message);
+    console.error("LEADORA live one-time checkout failed", message);
     return reply({ error: safe }, 502);
   }
 });
