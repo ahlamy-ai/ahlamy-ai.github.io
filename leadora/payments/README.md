@@ -19,7 +19,7 @@ The workspace now uses a small, single-plan checkout instead of three recurring 
 | Pro | EUR 19 | 30 days |
 | Business | EUR 49 | 30 days |
 
-A customer selects one plan and makes one payment. There is no automatic renewal; the customer pays again manually when the 30-day period ends. The page shows a PayPal button and shows a debit/credit card button only if PayPal's SDK marks card funding eligible for the current seller and buyer.
+A customer selects one plan and makes one payment. There is no automatic renewal; the customer pays again manually when the 30-day period ends. The 30-day period is recorded in the billing table; access expiry and plan feature limits are not yet enforced inside the CRM. The page shows a PayPal button and shows a debit/credit card button only if PayPal's SDK marks card funding eligible for the current seller and buyer.
 
 ### Security and records
 
