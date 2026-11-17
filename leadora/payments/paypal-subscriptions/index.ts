@@ -429,7 +429,7 @@ Deno.serve(async (req: Request) => {
     if (input.action === "eligibility") {
       const rows = await dbRequest(
         "lead_subscriptions?user_id=eq." + encodeURIComponent(userId) +
-        "&status=in.(ACTIVE,APPROVED,APPROVAL_PENDING)&select=paypal_subscription_id,plan_key,status&limit=1",
+        "&billing_type=eq.recurring&status=in.(ACTIVE,APPROVED,APPROVAL_PENDING)&select=paypal_subscription_id,plan_key,status&limit=1",
         "GET",
       );
       return reply({ allowed: !rows?.length, existing: rows?.[0] || null });
@@ -437,7 +437,7 @@ Deno.serve(async (req: Request) => {
 
     if (input.action === "status") {
       const rows = await dbRequest(
-        "lead_subscriptions?user_id=eq." + encodeURIComponent(userId) + "&select=paypal_subscription_id,plan_key,status,amount,currency,started_at,next_billing_at,last_payment_at,cancelled_at,created_at&order=created_at.desc&limit=10",
+        "lead_subscriptions?user_id=eq." + encodeURIComponent(userId) + "&billing_type=eq.recurring&select=paypal_subscription_id,plan_key,status,amount,currency,started_at,next_billing_at,last_payment_at,cancelled_at,created_at&order=created_at.desc&limit=10",
         "GET",
       );
       const refreshed = [];
