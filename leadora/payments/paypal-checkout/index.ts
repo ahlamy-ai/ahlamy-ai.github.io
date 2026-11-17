@@ -61,6 +61,25 @@ async function paypalToken(): Promise<string> {
   if (!response.ok) throw new Error("PAYPAL_AUTH_FAILED");
   return (await response.json()).access_token;
 }
+async function paypalClientToken(): Promise<string> {
+  const token = await paypalToken();
+  const response = await fetch(PAYPAL_BASE + "/v1/identity/generate-token", {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer " + token,
+      "Accept-Language": "en_US",
+      "Content-Type": "application/json",
+    },
+  });
+  const raw = await response.text();
+  let data: any = null;
+  try { data = raw ? JSON.parse(raw) : null; } catch { data = null; }
+  if (!response.ok || typeof data?.client_token !== "string") {
+    console.error("PayPal Sandbox client token error", response.status, data?.name || "unknown");
+    throw new Error("PAYPAL_CLIENT_TOKEN_FAILED");
+  }
+  return data.client_token;
+}
 async function paypalApi(path: string, method = "GET", body?: unknown, requestId?: string) {
   const token = await paypalToken();
   const headers: Record<string, string> = { Authorization: "Bearer " + token, "Content-Type": "application/json", Accept: "application/json" };
@@ -95,6 +114,10 @@ Deno.serve(async (req: Request) => {
       const clientId = Deno.env.get("PAYPAL_CLIENT_ID");
       if (!clientId) return reply({ error: "Sandbox checkout is not configured." }, 503);
       return reply({ mode: "sandbox", clientId, currency: CURRENCY, billingType: "one_time_monthly" });
+    }
+    if (input.action === "card-token") {
+      const clientToken = await paypalClientToken();
+      return reply({ clientToken });
     }
     if (input.action === "create-order") {
       const plan = String(input.plan || "").toLowerCase() as PlanKey, selected = PLANS[plan];
