@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#080d18">
+<title>LEADORA AI — Platform Admin</title>
+<style>
+:root{color-scheme:dark;--bg:#080d18;--panel:#111d30;--line:#2a3d58;--ink:#f5f8ff;--muted:#a1afc5;--mint:#7debd4;--blue:#9bb7ff;--red:#ff9b9b}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 85% 0%,#1b3557 0,transparent 35%),var(--bg);color:var(--ink);font:15px/1.55 Inter,system-ui,sans-serif}
+main{max-width:1160px;margin:auto;padding:28px 20px}.top{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:18px}.brand{font-weight:900;letter-spacing:.13em}.brand span{color:var(--mint)}.muted,small{color:var(--muted)}.panel,.stat{background:linear-gradient(145deg,#14233a,#0d1727);border:1px solid var(--line);border-radius:15px;padding:18px}.auth{max-width:460px;margin:50px auto}.auth h1{margin-top:0}input{width:100%;padding:12px;margin:7px 0 12px;background:#091321;color:var(--ink);border:1px solid var(--line);border-radius:9px}.btn{padding:10px 15px;border-radius:9px;border:1px solid var(--line);background:#1b2d48;color:var(--ink);font-weight:750;cursor:pointer}.primary{background:linear-gradient(110deg,var(--blue),var(--mint));color:#07111c;border:0}.danger{color:var(--red)}.hide{display:none!important}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:20px 0}.stat small{display:block;font-weight:700}.stat strong{display:block;font-size:30px;margin-top:8px}.section{margin-top:18px}.section h2{font-size:18px}.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:520px}th,td{text-align:left;padding:11px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-size:12px}.pill{display:inline-block;border:1px solid #7debd466;color:var(--mint);border-radius:30px;padding:3px 8px;font-size:11px}.msg{margin-top:12px;color:var(--red);white-space:pre-wrap}.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.toolbar .muted{margin-right:auto}footer{padding:25px 0;color:var(--muted);font-size:12px}@media(max-width:760px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.stat strong{font-size:25px}}@media(max-width:420px){main{padding:18px 12px}.stats{gap:8px}.stat{padding:13px}.stat strong{font-size:22px}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body><main>
+<header class="top"><div><div class="brand">LEADORA <span>AI</span> / PLATFORM ADMIN</div><div class="muted">Restricted operations overview · aggregate data only</div></div><div class="toolbar"><span id="who" class="muted"></span><button id="refresh" class="btn hide">Refresh</button><button id="logout" class="btn hide">Sign out</button></div></header>
+<section id="login" class="panel auth"><h1>Administrator sign in</h1><p class="muted">This area is restricted to the designated platform administrator. There is no public sign-up here.</p><label for="email">Account email</label><input id="email" type="email" autocomplete="username"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password"><button id="signin" class="btn primary">Sign in</button><div id="loginMsg" class="msg" role="status"></div></section>
+<section id="dashboard" class="hide">
+<div class="panel section"><div class="toolbar"><div><strong>Platform overview</strong><div id="generated" class="muted">Awaiting secure data…</div></div><span class="pill">SERVER-VERIFIED ADMIN</span></div></div>
+<div class="stats">
+<div class="stat"><small>Registered accounts</small><strong id="accounts">—</strong></div>
+<div class="stat"><small>Company workspaces</small><strong id="workspaces">—</strong></div>
+<div class="stat"><small>Workspace memberships</small><strong id="memberships">—</strong></div>
+<div class="stat"><small>Leads stored</small><strong id="leads">—</strong></div>
+<div class="stat"><small>Follow-up tasks</small><strong id="followups">—</strong></div>
+<div class="stat"><small>Subscriptions</small><strong id="subscriptions">—</strong></div>
+<div class="stat"><small>Active paid access</small><strong id="active">—</strong></div>
+<div class="stat"><small>Pending subscriptions</small><strong id="pending">—</strong></div>
+</div>
+<div class="panel section"><h2>Company workspaces</h2><p class="muted">Names and aggregate counts only. No lead notes, customer messages, passwords or session tokens are shown here.</p><div class="tablewrap"><table><thead><tr><th>Workspace</th><th>Created</th><th>Members</th><th>Leads</th></tr></thead><tbody id="tenantRows"><tr><td colspan="4" class="muted">No data loaded.</td></tr></tbody></table></div></div>
+<div class="panel section"><h2>Subscription status</h2><div id="billingRows" class="muted">No billing data loaded.</div></div>
+</section><footer>LEADORA AI · Private platform administration · Do not share this page as a customer dashboard.</footer>
+</main>
+<script>
+(()=>{
+const URL='https://abqgzquhuzxggmgqgcdf.supabase.co';
+const KEY='sb_publishable_RmagoXH40PU_PJluswRFHg_xqY3jkPi';
+const client=window.supabase.createClient(URL,KEY);
+const $=id=>document.getElementById(id);
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let session=null;
+function showError(t){$('loginMsg').textContent=t}
+function showLogin(){ $('login').classList.remove('hide');$('dashboard').classList.add('hide');$('refresh').classList.add('hide');$('logout').classList.add('hide');$('who').textContent='';}
+function showDashboard(){ $('login').classList.add('hide');$('dashboard').classList.remove('hide');$('refresh').classList.remove('hide');$('logout').classList.remove('hide');$('who').textContent=session?.user?.email||'Authenticated administrator';}
+async function load(){
+ if(!session)return;
+ $('generated').textContent='Loading verified metrics…';
+ const {data,error}=await client.rpc('admin_dashboard_stats');
+ if(error){$('generated').textContent='Access denied or data unavailable.';showError(error.message);$('dashboard').classList.add('hide');$('login').classList.remove('hide');return}
+ const t=data.totals||{};
+ for(const [id,key] of [['accounts','accounts'],['workspaces','workspaces'],['memberships','memberships'],['leads','leads'],['followups','followups'],['subscriptions','subscriptions'],['active','active_subscriptions'],['pending','pending_subscriptions']])$(id).textContent=Number(t[key]||0).toLocaleString();
+ $('generated').textContent='Updated '+new Date(data.generated_at).toLocaleString();
+ const rows=data.workspaces_summary||[];
+ $('tenantRows').innerHTML=rows.length?rows.map(x=>'<tr><td>'+esc(x.name)+'</td><td>'+esc(new Date(x.created_at).toLocaleDateString())+'</td><td>'+Number(x.members||0)+'</td><td>'+Number(x.leads||0)+'</td></tr>').join(''):'<tr><td colspan="4" class="muted">No workspaces yet.</td></tr>';
+ const billing=data.billing_status||[];
+ $('billingRows').innerHTML=billing.length?billing.map(x=>'<div class="toolbar" style="padding:8px 0;border-bottom:1px solid var(--line)"><span class="pill">'+esc(x.status)+'</span><strong>'+Number(x.count).toLocaleString()+'</strong></div>').join(''):'No subscriptions recorded.';
+}
+$('signin').onclick=async()=>{showError('');const {data,error}=await client.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){showError(error.message);return}session=data.session;showDashboard();await load()};
+$('password').addEventListener('keydown',e=>{if(e.key==='Enter')$('signin').click()});
+$('refresh').onclick=load;
+$('logout').onclick=async()=>{await client.auth.signOut();session=null;showLogin()};
+client.auth.onAuthStateChange((event,s)=>{session=s;if(event==='SIGNED_OUT')showLogin();else if(s){showDashboard();load()}});
+client.auth.getSession().then(({data})=>{session=data.session;if(session){showDashboard();load()}else showLogin()});
+})();
+</script></body></html>
