@@ -56,7 +56,7 @@ input,select,textarea{background:#0a1423;border-color:#2a3c57;border-radius:9px;
 <div class="field wide"><label for="assistantOrigins">Allowed website domains</label><input id="assistantOrigins" maxlength="1000" placeholder="https://example.com, https://www.example.com"><span class="sub">Separate domains with commas. Include https://.</span></div>
 <div class="field wide"><label for="assistantBusiness">About your business</label><textarea id="assistantBusiness" rows="4" maxlength="4000" placeholder="Describe your company, services, opening hours and contact details…"></textarea></div>
 <div class="field wide"><label for="assistantKnowledge">Frequently asked questions and answers</label><textarea id="assistantKnowledge" rows="6" maxlength="12000" placeholder="Q: What are your opening hours?&#10;A: Monday to Friday, 9:00–17:00…"></textarea></div>
-<div class="field wide"><label><input id="assistantEnabled" type="checkbox" style="width:auto;margin-right:8px">Enable assistant (only after the website widget is deployed)</label></div>
+<div class="field wide"><label><input id="assistantEnabled" type="checkbox" style="width:auto;margin-right:8px">Activation will be enabled after the secure website service is deployed</label></div>
 </div>
 <div class="toolbar"><button class="btn primary" id="assistantSave" type="button">Save assistant settings</button></div>
 <p class="sub" id="assistantSettingsStatus" aria-live="polite">Your settings are private to this company workspace.</p>
@@ -126,8 +126,8 @@ $('assistantSave').onclick=async()=>{
 $('profileLogout').onclick=()=>$('signOut').click();
 function accountDisplayName(){if(!session)return '';const m=session.user.user_metadata||{};const first=String(m.first_name||'').trim(),last=String(m.last_name||'').trim();return [first,last].filter(Boolean).join(' ')||String(m.full_name||m.name||'').trim()||'Name not set — complete My profile'}
 let assistantTenantId=null,assistantConfigId=null,assistantCanEdit=false;
-const assistantFieldIds=['assistantName','assistantLanguage','assistantGreeting','assistantColor','assistantPosition','assistantOrigins','assistantBusiness','assistantKnowledge','assistantEnabled','assistantSave'];
-function setAssistantEditable(enabled){assistantFieldIds.forEach(id=>{const el=$(id);if(el)el.disabled=!enabled});assistantCanEdit=enabled}
+const assistantFieldIds=['assistantName','assistantLanguage','assistantGreeting','assistantColor','assistantPosition','assistantOrigins','assistantBusiness','assistantKnowledge','assistantSave'];
+function setAssistantEditable(enabled){assistantFieldIds.forEach(id=>{const el=$(id);if(el)el.disabled=!enabled});$('assistantEnabled').disabled=true;assistantCanEdit=enabled}
 function assistantStatus(t){$('assistantSettingsStatus').textContent=t}
 function fillAssistantForm(row){assistantConfigId=row?.id||null;$('assistantName').value=row?.name||'LEADORA Assistant';$('assistantLanguage').value=row?.default_language||'auto';$('assistantGreeting').value=row?.greeting||'Hello! How can we help you?';$('assistantColor').value=row?.brand_color||'#8caeff';$('assistantPosition').value=row?.widget_position||'right';$('assistantOrigins').value=(row?.allowed_origins||[]).join(', ');$('assistantBusiness').value=row?.business_description||'';$('assistantKnowledge').value=row?.faq_text||'';$('assistantEnabled').checked=!!row?.enabled}
 async function loadAssistantSettings(features,plan){
