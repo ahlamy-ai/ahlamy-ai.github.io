@@ -1,4 +1,4 @@
-# LEADORA AI payment checkout
+# LEADORA payment checkout
 
 ## Current implementation: compact PayPal Sandbox checkout
 
@@ -47,3 +47,8 @@ A customer selects one plan and makes one payment. There is no automatic renewal
 - Paysera card collection is not enabled. Its eligibility requirements and the business registration documents still need to be reviewed with Paysera.
 - PayPal Live eligibility, withdrawal to Paysera, tax treatment, business registration, customer terms, privacy and refund/cancellation disclosures must be checked before a real-money launch.
 - Never commit PayPal secrets, Supabase secret keys, IBAN, SWIFT/BIC or private banking information to this public repository.
+
+
+## Enterprise enquiry tier (not enabled for checkout)
+
+The public pricing page and signed-in billing view now show an Enterprise enquiry tier at an indicative EUR 599–1,499 per month. It is a request-for-proposal route only: no PayPal button, no Enterprise plan key, no active subscription record, and no online charge are enabled. The listed capabilities are proposed scope, not currently deployed product features. Do not activate Enterprise billing until its features, support capacity, commercial terms, PayPal price/product configuration, server-side checkout validation, subscription entitlements, and security tests are complete.
