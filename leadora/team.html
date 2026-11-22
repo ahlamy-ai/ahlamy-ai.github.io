@@ -1,0 +1,36 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>LEADORA — Team settings</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{color-scheme:dark;--bg:#080d18;--line:#2a3d58;--ink:#f5f8ff;--muted:#a1afc5;--mint:#7debd4;--blue:#9bb7ff;--red:#ff9b9b}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 85% 0%,#1b3557 0,transparent 35%),var(--bg);color:var(--ink);font:15px/1.55 Inter,system-ui,sans-serif}main{max-width:900px;margin:auto;padding:25px 18px}.top,.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.top{border-bottom:1px solid var(--line);padding-bottom:16px}.brand{font-weight:900;letter-spacing:.12em}.brand span{color:var(--mint)}.muted,small{color:var(--muted)}.panel{background:linear-gradient(145deg,#14233a,#0d1727);border:1px solid var(--line);border-radius:15px;padding:18px;margin:18px 0}.btn{padding:10px 14px;border:1px solid var(--line);border-radius:9px;background:#1b2d48;color:var(--ink);font-weight:750;cursor:pointer}.primary{background:linear-gradient(110deg,var(--blue),var(--mint));color:#07111c;border:0}.danger{color:var(--red)}input,select{padding:11px;width:100%;background:#091321;color:var(--ink);border:1px solid var(--line);border-radius:9px}.form{display:grid;grid-template-columns:1fr 160px auto;gap:9px;align-items:end}.field label{display:block;color:var(--muted);font-size:12px;margin-bottom:5px}.member{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:13px 0;border-top:1px solid var(--line)}.member:first-child{border-top:0}.role{border:1px solid #7debd466;color:var(--mint);border-radius:20px;padding:3px 9px;font-size:11px}.msg{margin-top:12px;white-space:pre-wrap;color:var(--red)}.hide{display:none!important}@media(max-width:620px){.form{grid-template-columns:1fr}.member{grid-template-columns:1fr auto}.member button{grid-column:1/-1}.top{align-items:flex-start}}
+</style></head><body><main>
+<header class="top"><div><div class="brand">LEADORA <span>AI</span> / TEAM</div><div class="muted">Manage access to this workspace</div></div><div class="toolbar"><span id="account" class="muted"></span><button id="logout" class="btn hide">Sign out</button></div></header>
+<section id="login" class="panel"><h2>Sign in to manage your team</h2><label class="field">Email<input id="email" type="email" autocomplete="username"></label><label class="field">Password<input id="password" type="password" autocomplete="current-password"></label><button id="signin" class="btn primary">Sign in</button><div id="loginMsg" class="msg"></div></section>
+<section id="team" class="hide"><div class="panel"><h2>Workspace members</h2><p class="muted">Only the workspace owner and admins can see the team roster. New members must register their own LEADORA account first; then add their exact registered email here. No passwords are shared.</p><div id="memberList">Loading…</div><div id="teamMsg" class="msg" role="status"></div></div>
+<div id="addPanel" class="panel hide"><h2>Add a member</h2><div class="form"><div class="field"><label for="memberEmail">Registered account email</label><input id="memberEmail" type="email" placeholder="person@company.com"></div><div class="field"><label for="memberRole">Workspace role</label><select id="memberRole"><option value="employee">Employee</option><option value="admin">Admin</option></select></div><button id="addMember" class="btn primary">Add member</button></div><p class="muted">Admins can add employees. Only the owner can add admins. Membership is scoped to this workspace.</p></div></section>
+<footer class="muted">Workspace membership controls · LEADORA AI</footer></main>
+<script>
+(()=>{
+const client=window.supabase.createClient('https://abqgzquhuzxggmgqgcdf.supabase.co','sb_publishable_RmagoXH40PU_PJluswRFHg_xqY3jkPi');
+const $=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let session=null,actorRole=null;
+function msg(t){$('teamMsg').textContent=t}
+function loginMsg(t){$('loginMsg').textContent=t}
+function logged(){ $('login').classList.add('hide');$('team').classList.remove('hide');$('logout').classList.remove('hide');$('account').textContent=session?.user?.email||''}
+function signedOut(){ $('login').classList.remove('hide');$('team').classList.add('hide');$('logout').classList.add('hide');$('account').textContent=''}
+async function load(){
+ const {data,error}=await client.rpc('workspace_members_list');
+ if(error){msg(error.message+' — Only workspace owners and admins can manage members.');$('addPanel').classList.add('hide');return}
+ const members=Array.isArray(data)?data:[];
+ const me=members.find(x=>x.user_id===session.user.id);actorRole=me?.role||null;
+ $('addPanel').classList.toggle('hide',!['owner','admin'].includes(actorRole));
+ if(actorRole==='admin')$('memberRole').innerHTML='<option value="employee">Employee</option>';
+ $('memberList').innerHTML=members.length?members.map(m=>'<div class="member"><div><strong>'+esc(m.email)+'</strong><div class="muted">Joined '+esc(new Date(m.joined_at).toLocaleDateString())+'</div></div><span class="role">'+esc(m.role.toUpperCase())+'</span>'+(m.role==='owner'?'':'<button class="btn danger" data-remove="'+esc(m.member_id)+'">Remove</button>')+'</div>').join(''):'<p class="muted">No members found.</p>';
+}
+$('signin').onclick=async()=>{loginMsg('');const {data,error}=await client.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){loginMsg(error.message);return}session=data.session;logged();await load()};
+$('password').addEventListener('keydown',e=>{if(e.key==='Enter')$('signin').click()});
+$('addMember').onclick=async()=>{msg('');const email=$('memberEmail').value.trim(),role=$('memberRole').value;if(!email){msg('Enter the registered email first.');return}const {error}=await client.rpc('add_workspace_member',{p_email:email,p_role:role});if(error){msg(error.message);return}$('memberEmail').value='';msg('Member added to this workspace.');await load()};
+$('memberList').addEventListener('click',async e=>{const id=e.target.dataset.remove;if(!id)return;if(!confirm('Remove this member from this workspace? Their account and other workspaces will not be deleted.'))return;const {error}=await client.rpc('remove_workspace_member',{p_member_id:id});if(error){msg(error.message);return}msg('Member removed from this workspace.');await load()});
+$('logout').onclick=async()=>{await client.auth.signOut();session=null;signedOut()};
+client.auth.onAuthStateChange((event,s)=>{session=s;if(event==='SIGNED_OUT')signedOut();else if(s){logged();load()}});
+client.auth.getSession().then(({data})=>{session=data.session;if(session){logged();load()}else signedOut()});
+})();
+</script></body></html>
