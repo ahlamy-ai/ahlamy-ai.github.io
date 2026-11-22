@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#080d18">
-<title>LEADORA AI — Platform Admin</title>
+<title>LEADORA — Platform Admin</title>
 <style>
 :root{color-scheme:dark;--bg:#080d18;--panel:#111d30;--line:#2a3d58;--ink:#f5f8ff;--muted:#a1afc5;--mint:#7debd4;--blue:#9bb7ff;--red:#ff9b9b}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 85% 0%,#1b3557 0,transparent 35%),var(--bg);color:var(--ink);font:15px/1.55 Inter,system-ui,sans-serif}
@@ -12,7 +12,7 @@ main{max-width:1160px;margin:auto;padding:28px 20px}.top{display:flex;justify-co
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body><main>
-<header class="top"><div><div class="brand">LEADORA <span>AI</span> / PLATFORM ADMIN</div><div class="muted">Restricted operations overview · aggregate data only</div></div><div class="toolbar"><span id="who" class="muted"></span><button id="refresh" class="btn hide">Refresh</button><button id="logout" class="btn hide">Sign out</button></div></header>
+<header class="top"><div><div class="brand">LEADORA / PLATFORM ADMIN</div><div class="muted">Restricted operations overview · aggregate data only</div></div><div class="toolbar"><span id="who" class="muted"></span><button id="refresh" class="btn hide">Refresh</button><button id="logout" class="btn hide">Sign out</button></div></header>
 <section id="login" class="panel auth"><h1>Administrator sign in</h1><p class="muted">This area is restricted to the designated platform administrator. There is no public sign-up here.</p><label for="email">Account email</label><input id="email" type="email" autocomplete="username"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password"><button id="signin" class="btn primary">Sign in</button><div id="loginMsg" class="msg" role="status"></div></section>
 <section id="dashboard" class="hide">
 <div class="panel section"><div class="toolbar"><div><strong>Platform overview</strong><div id="generated" class="muted">Awaiting secure data…</div></div><span class="pill">SERVER-VERIFIED ADMIN</span></div></div>
@@ -28,7 +28,7 @@ main{max-width:1160px;margin:auto;padding:28px 20px}.top{display:flex;justify-co
 </div>
 <div class="panel section"><h2>Company workspaces</h2><p class="muted">Names and aggregate counts only. No lead notes, customer messages, passwords or session tokens are shown here.</p><div class="tablewrap"><table><thead><tr><th>Workspace</th><th>Created</th><th>Members</th><th>Leads</th></tr></thead><tbody id="tenantRows"><tr><td colspan="4" class="muted">No data loaded.</td></tr></tbody></table></div></div>
 <div class="panel section"><h2>Subscription status</h2><div id="billingRows" class="muted">No billing data loaded.</div></div>
-</section><footer>LEADORA AI · Private platform administration · Do not share this page as a customer dashboard.</footer>
+</section><footer>LEADORA · Private platform administration · Do not share this page as a customer dashboard.</footer>
 </main>
 <script>
 (()=>{
