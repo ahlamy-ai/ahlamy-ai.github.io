@@ -52,3 +52,6 @@ A customer selects one plan and makes one payment. There is no automatic renewal
 ## Enterprise enquiry tier (not enabled for checkout)
 
 The public pricing page and signed-in billing view now show an Enterprise enquiry tier at an indicative EUR 599–1,499 per month. It is a request-for-proposal route only: no PayPal button, no Enterprise plan key, no active subscription record, and no online charge are enabled. The listed capabilities are proposed scope, not currently deployed product features. Do not activate Enterprise billing until its features, support capacity, commercial terms, PayPal price/product configuration, server-side checkout validation, subscription entitlements, and security tests are complete.
+
+
+Database preparation: `lead_subscriptions.plan_key` now accepts the reserved `enterprise` value, and `paypal_billing_config.enterprise_plan_id` exists as a nullable configuration field. No Enterprise subscription or PayPal plan is provisioned. The checkout Edge Functions still whitelist only Starter, Pro, and Business, so Enterprise cannot be charged through the API.
