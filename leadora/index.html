@@ -30,18 +30,58 @@ section{padding:78px 0}.sectionHead{max-width:680px;margin-bottom:32px}.kicker{c
 <section id="contact"><div class="wrap"><div class="cta"><div class="kicker">Start a conversation</div><h2>Let’s make every inquiry count.</h2><p>Tell us how your team currently handles new leads. We’re exploring focused pilot projects and practical workflows with early partners.</p><a class="btn primary" href="mailto:leadoraalbusiness@gmail.com?subject=LEADORA%20AI%20-%20Pilot%20inquiry">Email LEADORA AI ↗</a></div></div></section>
 <section id="account"><div class="wrap"><div class="cta accountBox"><div class="kicker">Your LEADORA account</div><h2>Sign in or create your workspace.</h2><p>Access to the workspace is available after you sign in. New here? Create an account and confirm your email to get started.</p><div class="accountForm"><label for="accountEmail">Business email</label><input id="accountEmail" type="email" autocomplete="email" placeholder="you@company.com"><label for="accountPassword">Password</label><input id="accountPassword" type="password" autocomplete="current-password" minlength="12" placeholder="12+ characters, upper/lowercase, number and symbol"><div class="accountActions"><button class="btn primary" id="accountSignIn" type="button">Sign in</button><button class="btn secondary" id="accountSignUp" type="button">Create account</button></div><p id="accountMessage" class="accountMessage" role="status" aria-live="polite"></p></div><p class="note">Your password is private. LEADORA will never display it.</p></div></div></section>
 </main>
-<script type="module">
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-const accountDb=createClient("https://abqgzquhuzxggmgqgcdf.supabase.co","sb_publishable_RmagoXH40PU_PJluswRFHg_xqY3jkPi");
+<script>
 const accountMessage=document.getElementById("accountMessage");
-function showAccountMessage(text){accountMessage.textContent=text}
-showAccountMessage("Registration service loaded. Enter your email and password.");
-const accountRedirect="https://ahlamy-ai.github.io/leadora/dashboard.html";
-function accountBusy(button,busy,label){button.disabled=busy;button.textContent=busy?"Please wait…":label}
 const signInButton=document.getElementById("accountSignIn");
 const signUpButton=document.getElementById("accountSignUp");
-signInButton.addEventListener("click",async()=>{const email=document.getElementById("accountEmail").value.trim(),password=document.getElementById("accountPassword").value;if(!email||!password){showAccountMessage("Enter your email and password.");return}accountBusy(signInButton,true,"Sign in");showAccountMessage("Signing in…");try{const {error}=await accountDb.auth.signInWithPassword({email,password});if(error){showAccountMessage("Sign-in failed: "+error.message);return}showAccountMessage("Signed in. Opening your workspace…");location.href=accountRedirect}catch(e){showAccountMessage("Connection error: "+(e?.message||"Please try again."))}finally{accountBusy(signInButton,false,"Sign in")}});
-signUpButton.addEventListener("click",async()=>{const email=document.getElementById("accountEmail").value.trim(),password=document.getElementById("accountPassword").value;if(!email||!password){showAccountMessage("Enter your email and choose a password.");return}if(password.length<12){showAccountMessage("Password rejected: it must contain at least 12 characters.");return}if(!/[a-z]/.test(password)){showAccountMessage("Password rejected: add at least one lowercase letter.");return}if(!/[A-Z]/.test(password)){showAccountMessage("Password rejected: add at least one uppercase letter.");return}if(!/[0-9]/.test(password)){showAccountMessage("Password rejected: add at least one number.");return}if(!/[^A-Za-z0-9]/.test(password)){showAccountMessage("Password rejected: add at least one symbol such as ! or @.");return}if(/\s/.test(password)){showAccountMessage("Password rejected: spaces are not allowed.");return}accountBusy(signUpButton,true,"Create account");showAccountMessage("Creating your account…");try{const {data,error}=await accountDb.auth.signUp({email,password,options:{emailRedirectTo:accountRedirect}});if(error){showAccountMessage("Account creation failed: "+error.message);return}if(data.session){showAccountMessage("Account created. Opening your workspace…");location.href=accountRedirect}else{showAccountMessage("Account created. Email confirmation is required. Opening workspace login…");setTimeout(()=>{location.href=accountRedirect+"?signup=pending"},1000)}}catch(e){showAccountMessage("Connection error: "+(e?.message||"Please try again."))}finally{accountBusy(signUpButton,false,"Create account")}});
+const accountRedirect="https://ahlamy-ai.github.io/leadora/dashboard.html";
+function showAccountMessage(text){accountMessage.textContent=text}
+function accountBusy(button,busy,label){button.disabled=busy;button.textContent=busy?"Please wait…":label}
+let accountDb=null;
+function loadScript(src){return new Promise((resolve,reject)=>{const s=document.createElement("script");s.src=src;s.async=true;s.onload=resolve;s.onerror=()=>reject(new Error("Could not load "+src));document.head.appendChild(s)})}
+async function initializeRegistration(){
+  showAccountMessage("Connecting to the secure registration service…");
+  const sources=[
+    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js",
+    "https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"
+  ];
+  let loaded=false,lastError=null;
+  for(const src of sources){
+    try{if(!window.supabase?.createClient)await loadScript(src);if(window.supabase?.createClient){loaded=true;break}}
+    catch(e){lastError=e}
+  }
+  if(!loaded){showAccountMessage("Registration service could not load in this browser. Check your connection or disable content blocking, then refresh. "+(lastError?.message||""));return}
+  try{
+    accountDb=window.supabase.createClient("https://abqgzquhuzxggmgqgcdf.supabase.co","sb_publishable_RmagoXH40PU_PJluswRFHg_xqY3jkPi");
+    signInButton.disabled=false;signUpButton.disabled=false;
+    showAccountMessage("Registration service ready. Enter your email and password.");
+  }catch(e){showAccountMessage("Registration setup failed: "+(e?.message||"Please refresh."))}
+}
+signInButton.disabled=true;signUpButton.disabled=true;
+signInButton.addEventListener("click",async()=>{
+  const email=document.getElementById("accountEmail").value.trim(),password=document.getElementById("accountPassword").value;
+  if(!accountDb){showAccountMessage("Registration service is not ready. Refresh the page.");return}
+  if(!email||!password){showAccountMessage("Enter your email and password.");return}
+  accountBusy(signInButton,true,"Sign in");showAccountMessage("Signing in…");
+  try{const {error}=await accountDb.auth.signInWithPassword({email,password});if(error){showAccountMessage("Sign-in failed: "+error.message);return}showAccountMessage("Signed in. Opening your workspace…");location.href=accountRedirect}
+  catch(e){showAccountMessage("Connection error: "+(e?.message||"Please try again."))}
+  finally{accountBusy(signInButton,false,"Sign in")}
+});
+signUpButton.addEventListener("click",async()=>{
+  const email=document.getElementById("accountEmail").value.trim(),password=document.getElementById("accountPassword").value;
+  if(!accountDb){showAccountMessage("Registration service is not ready. Refresh the page.");return}
+  if(!email||!password){showAccountMessage("Enter your email and choose a password.");return}
+  if(password.length<8){showAccountMessage("Password must contain at least 8 characters.");return}
+  accountBusy(signUpButton,true,"Create account");showAccountMessage("Sending account creation request to the server…");
+  try{
+    const {data,error}=await accountDb.auth.signUp({email,password,options:{emailRedirectTo:accountRedirect}});
+    if(error){showAccountMessage("Server rejected account creation: "+error.message);return}
+    if(data.session){showAccountMessage("Account created. Opening your workspace…");location.href=accountRedirect}
+    else{showAccountMessage("Registration request accepted. Check your inbox (and spam folder) to confirm the email, then sign in.");}
+  }catch(e){showAccountMessage("Connection error: "+(e?.message||"Please try again."))}
+  finally{accountBusy(signUpButton,false,"Create account")}
+});
+initializeRegistration();
 </script>
 <footer><div class="wrap foot"><span>© 2026 LEADORA AI. All rights reserved.</span><span>Independent, globally minded. Built around people and better follow-through.</span><a href="mailto:leadoraalbusiness@gmail.com">leadoraalbusiness@gmail.com</a></div></footer>
 </body></html>
