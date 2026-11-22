@@ -55,3 +55,14 @@ The public pricing page and signed-in billing view now show an Enterprise enquir
 
 
 Database preparation: `lead_subscriptions.plan_key` now accepts the reserved `enterprise` value, and `paypal_billing_config.enterprise_plan_id` exists as a nullable configuration field. No Enterprise subscription or PayPal plan is provisioned. The checkout Edge Functions still whitelist only Starter, Pro, and Business, so Enterprise cannot be charged through the API.
+
+
+## New monthly pricing and entitlement rollout (2026-11-22)
+
+- Public plan prices: Starter €9/month, Professional €99/month, Business €299/month, Enterprise €599–1,499/month (custom proposal).
+- The legacy live `paypal-checkout` endpoint was changed to reject new order creation and return a disabled bootstrap response. Existing capture validation is retained for already-approved legacy orders so completed payments can still be reconciled.
+- The billing UI no longer exposes the legacy one-time checkout flow. No new payment should be accepted until exact live recurring PayPal plans, subscription confirmation, webhook lifecycle handling, and cancellation/status flows are verified.
+- Supabase `plan_entitlements` stores the feature matrix and all plans currently have `active_for_sale=false`.
+- Workspace team management is server-side restricted to an active recurring entitlement with the matching new monthly amount: Professional €99 or higher. Legacy €19/€49 sandbox/one-time records do not grant the new paid team features.
+- CSV export visibility is driven by the authenticated workspace entitlement response and is shown only for Business/Enterprise. It remains a UI feature gate; server-side export endpoint enforcement is not applicable yet because export is currently generated client-side from already-authorized lead data.
+- Branch management, branch comparisons, lead assignment, quote templates, automation, and multi-level permissions are not yet implemented as product features. Their entitlement flags are catalogued but must not be represented as live capabilities until their data models, UI and server-side authorization are built and tested.
