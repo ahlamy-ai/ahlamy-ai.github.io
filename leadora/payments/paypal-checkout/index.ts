@@ -94,24 +94,20 @@ Deno.serve(async (req: Request) => {
   let input: any;
   try { input = await req.json(); } catch { return reply({ error: "Invalid JSON" }, 400); }
   try {
-    if (PAYPAL_ENV !== "live") return reply({ error: "Live PayPal mode is not enabled. Set PAYPAL_ENV to live." }, 503);
+    // New public pricing is monthly recurring (€9/€99/€299; Enterprise custom).
+    // Until matching LIVE PayPal recurring plans and entitlements are verified,
+    // no new payment order may be created and no stale one-time price is exposed.
     if (input.action === "bootstrap") {
-      const clientId = Deno.env.get("PAYPAL_LIVE_CLIENT_ID");
-      const secret = Deno.env.get("PAYPAL_LIVE_CLIENT_SECRET");
-      if (!clientId || !secret) return reply({ error: "Live PayPal credentials are not configured." }, 503);
-      await paypalToken();
-      return reply({ mode: "live", clientId, currency: CURRENCY, billingType: "one_time_monthly" });
+      return reply({
+        mode: "disabled",
+        billingType: "monthly_recurring",
+        message: "Monthly LEADORA plans are being configured. Checkout is temporarily unavailable; no payment has been initiated.",
+      });
     }
     if (input.action === "create-order") {
-      const plan = String(input.plan || "").toLowerCase() as PlanKey, selected = PLANS[plan];
-      if (!selected) return reply({ error: "Choose a valid LEADORA plan." }, 400);
-      const order = await paypalApi("/v2/checkout/orders", "POST", {
-        intent: "CAPTURE",
-        purchase_units: [{ custom_id: userId + ":" + plan, invoice_id: "LD-" + crypto.randomUUID(), description: "LEADORA " + selected.label + " plan — 30-day plan period", amount: { currency_code: CURRENCY, value: selected.amount } }],
-        application_context: { brand_name: "LEADORA", user_action: "PAY_NOW", shipping_preference: "NO_SHIPPING" },
-      }, crypto.randomUUID());
-      return reply({ id: order.id });
+      return reply({ error: "Checkout is paused while the new monthly prices and plan permissions are configured. No payment was taken." }, 503);
     }
+    if (PAYPAL_ENV !== "live") return reply({ error: "Live PayPal mode is not enabled. Set PAYPAL_ENV to live." }, 503);
     if (input.action === "capture-order") {
       const orderId = String(input.orderId || "");
       if (!/^[A-Z0-9-]{8,64}$/i.test(orderId)) return reply({ error: "Invalid payment reference." }, 400);
