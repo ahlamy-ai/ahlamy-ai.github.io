@@ -5,9 +5,9 @@ const SITE_ORIGIN = "https://ahlamy-ai.github.io";
 const FUNCTION_URL = "https://abqgzquhuzxggmgqgcdf.supabase.co/functions/v1/paypal-subscriptions";
 const CURRENCY = "EUR";
 const PLANS = {
-  starter: { amount: "9.00", name: "LEADORA AI Starter — Monthly" },
-  pro: { amount: "19.00", name: "LEADORA AI Pro — Monthly" },
-  business: { amount: "49.00", name: "LEADORA AI Business — Monthly" },
+  starter: { amount: "9.00", name: "LEADORA Starter — Monthly" },
+  pro: { amount: "19.00", name: "LEADORA Pro — Monthly" },
+  business: { amount: "49.00", name: "LEADORA Business — Monthly" },
 } as const;
 
 type PlanKey = keyof typeof PLANS;
@@ -156,8 +156,8 @@ async function ensureCatalog() {
       "/v1/catalogs/products",
       "POST",
       {
-        name: "LEADORA AI",
-        description: "AI-powered lead management and customer follow-up software",
+        name: "LEADORA",
+        description: "Lead management and customer follow-up software",
         type: "SERVICE",
         category: "SOFTWARE",
         home_url: "https://ahlamy-ai.github.io/leadora/",
@@ -342,7 +342,7 @@ Deno.serve(async (req: Request) => {
 
   if (req.method === "GET") {
     return reply({
-      service: "LEADORA AI PayPal Subscriptions",
+      service: "LEADORA PayPal Subscriptions",
       mode: "sandbox",
       credentialsPresent: Boolean(Deno.env.get("PAYPAL_CLIENT_ID") && Deno.env.get("PAYPAL_CLIENT_SECRET")),
     });
@@ -480,7 +480,7 @@ Deno.serve(async (req: Request) => {
       await paypalApi(
         "/v1/billing/subscriptions/" + encodeURIComponent(subscriptionId) + "/cancel",
         "POST",
-        { reason: "Cancelled by the subscriber in LEADORA AI." },
+        { reason: "Cancelled by the subscriber in LEADORA." },
       );
       await dbRequest(
         "lead_subscriptions?paypal_subscription_id=eq." + encodeURIComponent(subscriptionId),
