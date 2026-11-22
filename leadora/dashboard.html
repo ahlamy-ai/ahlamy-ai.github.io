@@ -144,7 +144,7 @@ async function loadAssistantSettings(features,plan){
  if(error)throw error;
  fillAssistantForm(row);
  badge.textContent='ENTERPRISE ACTIVE';
- notice.textContent='Enterprise access verified for this workspace. Changes are saved only to this company's settings.';
+ notice.textContent='Enterprise access verified for this workspace. Changes are saved only to this company workspace.';
  setAssistantEditable(true);
 }
 async function loadPlanEntitlements(){if(!session){$('teamNav').classList.add('hide');$('export').classList.add('hide');try{await loadAssistantSettings({},null)}catch(e){assistantStatus(e.message)}return}try{const {data,error}=await db.rpc('workspace_entitlements');if(error)throw error;const features=data?.features||{};$('teamNav').classList.toggle('hide',!features.team_management);$('export').classList.toggle('hide',!features.data_export);await loadAssistantSettings(features,data?.plan||null)}catch(error){console.warn('Could not load plan entitlements',error);$('teamNav').classList.add('hide');$('export').classList.add('hide');setAssistantEditable(false);$('assistantPlanBadge').textContent='ACCESS CHECK FAILED';$('assistantPlanNotice').textContent='Could not verify your Enterprise access. Settings remain locked.';assistantStatus(error.message)}}
