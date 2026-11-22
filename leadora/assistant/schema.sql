@@ -63,7 +63,7 @@ alter table public.site_assistant_messages enable row level security;
 alter table public.site_assistant_rate_limits enable row level security;
 
 revoke all on public.site_assistants, public.site_assistant_conversations,
-  public.site_assistant_messages, public.site_assistant_rate_limits from anon, public;
+  public.site_assistant_messages, public.site_assistant_rate_limits from anon, authenticated, public;
 grant select, insert, update, delete on public.site_assistants to authenticated;
 grant select on public.site_assistant_conversations, public.site_assistant_messages to authenticated;
 grant all on public.site_assistants, public.site_assistant_conversations,
