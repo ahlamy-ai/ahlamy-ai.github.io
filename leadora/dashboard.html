@@ -115,7 +115,7 @@ $('profileSave').onclick=async()=>{if(!session)return;const first=$('profileFirs
 $('assistantSave').onclick=async()=>{
  if(!session||!assistantCanEdit||!assistantTenantId){assistantStatus('Your workspace does not have permission to save assistant settings.');return}
  const rawOrigins=$('assistantOrigins').value.split(/[\\n,]+/).map(x=>x.trim()).filter(Boolean),origins=[];
- try{for(const raw of rawOrigins){const u=new URL(raw);if(!['https:','http:'].includes(u.protocol))throw new Error('Use website addresses beginning with https://');origins.push(u.origin)}}catch(e){assistantStatus('Invalid website domain: '+e.message);return}
+ try{for(const raw of rawOrigins){const u=new URL(raw);if(u.protocol!=='https:'&&!(u.protocol==='http:'&&['localhost','127.0.0.1'].includes(u.hostname)))throw new Error('Use https:// domains (http is allowed only for localhost).');origins.push(u.origin)}}catch(e){assistantStatus('Invalid website domain: '+e.message);return}
  const payload={tenant_id:assistantTenantId,name:$('assistantName').value.trim(),default_language:$('assistantLanguage').value,greeting:$('assistantGreeting').value.trim(),brand_color:$('assistantColor').value,widget_position:$('assistantPosition').value,allowed_origins:[...new Set(origins)],business_description:$('assistantBusiness').value.trim(),faq_text:$('assistantKnowledge').value.trim(),enabled:$('assistantEnabled').checked,updated_at:new Date().toISOString()};
  if(!payload.name||!payload.greeting){assistantStatus('Assistant name and welcome message are required.');return}
  $('assistantSave').disabled=true;assistantStatus('Saving settings securely…');
