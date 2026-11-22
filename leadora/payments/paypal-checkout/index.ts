@@ -122,22 +122,74 @@ Deno.serve(async (req: Request) => {
       if (orderUserId !== userId) return reply({ error: "This payment belongs to a different LEADORA account." }, 403);
       if (!selected || unit?.amount?.currency_code !== CURRENCY || unit?.amount?.value !== selected.amount) return reply({ error: "The payment amount does not match the selected LEADORA plan." }, 400);
       const existing = await dbRequest("lead_subscriptions?paypal_order_id=eq." + encodeURIComponent(orderId) + "&user_id=eq." + encodeURIComponent(userId) + "&select=plan_key,status,access_until,amount,currency&limit=1");
-      if (existing?.length) return reply({ status: "COMPLETED", plan: existing[0].plan_key, accessUntil: existing[0].access_until, alreadyRecorded: true });
+      if (existing?.length) {
+        return reply({
+          status: "COMPLETED",
+          plan: existing[0].plan_key,
+          accessUntil: existing[0].access_until,
+          alreadyRecorded: true,
+        });
+      }
+
+      // A retry after a successful PayPal capture must be safe: PayPal's order
+      // state is authoritative, and the capture request uses a stable
+      // PayPal-Request-Id derived from the order ID.
       let captured = order;
-      if (order.status === "APPROVED") captured = await paypalApi("/v2/checkout/orders/" + encodeURIComponent(orderId) + "/capture", "POST", {}, "LD-CAP-" + orderId);
-      if (captured.status !== "COMPLETED") return reply({ error: "PayPal has not confirmed the payment yet." }, 409);
-      const paidAt = new Date().toISOString();
+      if (order.status === "APPROVED") {
+        captured = await paypalApi(
+          "/v2/checkout/orders/" + encodeURIComponent(orderId) + "/capture",
+          "POST",
+          {},
+          "LD-CAP-" + orderId,
+        );
+      }
+      if (captured.status !== "COMPLETED") {
+        return reply({ error: "PayPal has not confirmed the payment yet." }, 409);
+      }
+
+      // Validate the completed capture itself, not only the amount on the
+      // pre-capture order. This prevents recording access for a mismatched
+      // or incomplete capture response.
+      const completedCapture = captured.purchase_units?.[0]?.payments?.captures
+        ?.find((item: any) => item.status === "COMPLETED");
+      const paidAmount = completedCapture?.amount;
+      if (
+        !completedCapture ||
+        paidAmount?.currency_code !== CURRENCY ||
+        paidAmount?.value !== selected.amount
+      ) {
+        console.error("Completed PayPal capture did not match the LEADORA plan", orderId);
+        return reply({ error: "Payment was not fully confirmed. Please contact support before retrying." }, 409);
+      }
+
+      const paidAt = completedCapture.create_time || new Date().toISOString();
       const latest = await dbRequest("lead_subscriptions?user_id=eq." + encodeURIComponent(userId) + "&billing_type=eq.one_time&status=eq.ACTIVE&access_until=gt." + encodeURIComponent(paidAt) + "&select=access_until&order=access_until.desc&limit=1");
       const previousExpiry = latest?.[0]?.access_until ? new Date(latest[0].access_until) : null;
       const startFrom = previousExpiry && previousExpiry.getTime() > Date.now() ? previousExpiry : new Date(paidAt);
       const accessUntil = addOneMonth(startFrom).toISOString();
       const payerId = captured.payer?.payer_id || order.payer?.payer_id || null;
+
+      // Ignore duplicate inserts, then read the persisted row. If storage
+      // fails after PayPal captured the money, the customer can retry this
+      // same order ID; the order remains COMPLETED and no second capture occurs.
       await dbRequest("lead_subscriptions?on_conflict=paypal_order_id", "POST", {
         user_id: userId, paypal_subscription_id: null, paypal_plan_id: null, paypal_order_id: orderId, billing_type: "one_time",
         plan_key: plan, status: "ACTIVE", amount: selected.amount, currency: CURRENCY, payer_id: payerId,
-        started_at: paidAt, last_payment_at: paidAt, access_until: accessUntil, updated_at: paidAt,
+        started_at: paidAt, last_payment_at: paidAt, access_until: accessUntil, updated_at: new Date().toISOString(),
       }, "resolution=ignore-duplicates,return=minimal");
-      return reply({ status: "COMPLETED", plan, accessUntil, alreadyRecorded: false });
+
+      const persisted = await dbRequest(
+        "lead_subscriptions?paypal_order_id=eq." + encodeURIComponent(orderId) +
+        "&user_id=eq." + encodeURIComponent(userId) +
+        "&select=plan_key,status,access_until,amount,currency&limit=1",
+      );
+      const saved = persisted?.[0];
+      if (!saved || saved.status !== "ACTIVE" || saved.plan_key !== plan ||
+          String(saved.amount) !== selected.amount || saved.currency !== CURRENCY) {
+        console.error("PayPal capture succeeded but LEADORA access record needs reconciliation", orderId);
+        return reply({ error: "Payment succeeded but account activation is pending. Retry payment status or contact support; do not pay again." }, 503);
+      }
+      return reply({ status: "COMPLETED", plan: saved.plan_key, accessUntil: saved.access_until, alreadyRecorded: false });
     }
     if (input.action === "status") {
       const rows = await dbRequest("lead_subscriptions?user_id=eq." + encodeURIComponent(userId) + "&billing_type=eq.one_time&select=paypal_order_id,plan_key,status,amount,currency,started_at,last_payment_at,access_until,created_at&order=created_at.desc&limit=10");
