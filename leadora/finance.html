@@ -62,7 +62,7 @@ const KEY='sb_publishable_RmagoXH40PU_PJluswRFHg_xqY3jkPi';
 const db=window.supabase.createClient(URL,KEY),$=id=>document.getElementById(id);
 let session=null, investors=[], accounts=[], commitments=[], transactions=[];
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const money=(v,c)=>new Intl.NumberFormat(undefined,{style:'currency',currency:c==='other'?'EUR':c,maximumFractionDigits:2}).format(Number(v||0))+(c==='other'?' (other)':'');
+const money=(v,c)=>c==='other'?Number(v||0).toFixed(2)+' OTHER':new Intl.NumberFormat(undefined,{style:'currency',currency:c,maximumFractionDigits:2}).format(Number(v||0));
 const date=v=>v?new Date(v+'T00:00:00').toLocaleDateString():'—';
 const formObj=f=>Object.fromEntries(new FormData(f).entries());
 function msg(id,t){$(id).textContent=t}
@@ -110,14 +110,14 @@ $('password').addEventListener('keydown',e=>{if(e.key==='Enter')$('signin').clic
 $('logout').onclick=async()=>{await db.auth.signOut();session=null;showLogin()};
 $('refresh').onclick=async()=>{try{await load()}catch(e){alert(e.message)}};
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.view').forEach(x=>x.classList.toggle('active',x.id==='view-'+b.dataset.tab))});
-async function saveForm(id,tableName,target){const f=$(id);f.addEventListener('submit',async e=>{e.preventDefault();const data=formObj(f);Object.keys(data).forEach(k=>{if(data[k]==='')data[k]=null});if(data.amount!==undefined)data.amount=Number(data.amount);const {error}=await db.from(tableName).insert(data);if(error){msg(target,'Save failed: '+error.message);return}f.reset();msg(target,'Saved successfully.');await load()})}
+async function saveForm(id,tableName,target){const f=$(id);f.addEventListener('submit',async e=>{e.preventDefault();const data=formObj(f);if(tableName==='finance_transactions'&&data.status==='confirmed'&&!confirm('Confirm only if you checked the transaction against reliable bank evidence. Continue?'))return;Object.keys(data).forEach(k=>{if(data[k]==='')data[k]=null});if(data.amount!==undefined)data.amount=Number(data.amount);const {error}=await db.from(tableName).insert(data);if(error){msg(target,'Save failed: '+error.message);return}f.reset();msg(target,'Saved successfully.');await load()})}
 saveForm('investorForm','finance_investors','investorMsg');
 saveForm('accountForm','finance_accounts','accountMsg');
 saveForm('commitmentForm','finance_commitments','commitmentMsg');
 saveForm('transactionForm','finance_transactions','transactionMsg');
 $('transactionForm').elements.transaction_date.value=new Date().toISOString().slice(0,10);
 $('transactionTable').addEventListener('click',async e=>{const id=e.target.dataset.saveStatus;if(!id)return;const s=document.querySelector('[data-status="'+id+'"]').value;if(s==='confirmed'&&!confirm('Confirm only if you checked the transaction against reliable bank evidence. Continue?'))return;const {error}=await db.from('finance_transactions').update({status:s,updated_at:new Date().toISOString()}).eq('id',id);if(error){alert(error.message);return}await load()});
-db.auth.onAuthStateChange(async(event,s)=>{if(event==='SIGNED_OUT'){session=null;showLogin()}else if(event==='SIGNED_IN'&&s){try{await requireAdmin(s)}catch(e){await db.auth.signOut();showLogin(e.message)}}});
+db.auth.onAuthStateChange((event)=>{if(event==='SIGNED_OUT'){session=null;showLogin()}});
 db.auth.getSession().then(async({data})=>{if(data.session){try{await requireAdmin(data.session)}catch(e){await db.auth.signOut();showLogin(e.message)}}else showLogin()});
 })();
 </script></body></html>
