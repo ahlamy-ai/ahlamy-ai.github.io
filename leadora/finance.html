@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#080d18">
+<title>LEADORA — Finance & Investors</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{color-scheme:dark;--bg:#080d18;--panel:#111d30;--line:#2a3d58;--ink:#f5f8ff;--muted:#a1afc5;--mint:#7debd4;--blue:#9bb7ff;--red:#ff9b9b;--gold:#e8c987}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 85% 0%,#1b3557 0,transparent 35%),var(--bg);color:var(--ink);font:14px/1.55 Inter,system-ui,sans-serif}
+main{max-width:1440px;margin:auto;padding:26px 20px}.top{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:18px}.brand{font-weight:900;letter-spacing:.13em}.brand span{color:var(--mint)}.muted,small{color:var(--muted)}a{color:var(--blue);text-decoration:none}.btn{padding:10px 14px;border-radius:9px;border:1px solid var(--line);background:#1b2d48;color:var(--ink);font-weight:750;cursor:pointer}.primary{background:linear-gradient(110deg,var(--blue),var(--mint));color:#07111c;border:0}.hide{display:none!important}.panel,.stat{background:linear-gradient(145deg,#14233a,#0d1727);border:1px solid var(--line);border-radius:15px;padding:18px}.auth{max-width:440px;margin:70px auto}.auth h1{margin-top:0}input,select,textarea{width:100%;padding:11px;margin:5px 0 12px;background:#091321;color:var(--ink);border:1px solid var(--line);border-radius:9px;font:inherit}textarea{min-height:78px;resize:vertical}label{display:block;color:var(--muted);font-size:12px;font-weight:700}.msg{margin-top:12px;white-space:pre-wrap;color:var(--gold)}.toolbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.toolbar .muted{margin-right:auto}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:20px 0}.stat small{display:block;font-weight:700}.stat strong{display:block;font-size:27px;margin-top:8px}.stat span{display:block;font-size:11px;color:var(--muted);margin-top:4px}.layout{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.panel h2{font-size:17px;margin:0 0 13px}.tabs{display:flex;gap:7px;flex-wrap:wrap;margin:20px 0}.tab{padding:9px 13px;border-radius:9px;border:1px solid var(--line);background:#101c2e;color:var(--muted);cursor:pointer}.tab.active{color:var(--ink);border-color:var(--mint);background:#14332f}.view{display:none}.view.active{display:block}.gridform{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px}.wide{grid-column:1/-1}.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:680px}th,td{text-align:left;padding:10px 9px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em}.pill{display:inline-block;border:1px solid #7debd466;color:var(--mint);border-radius:30px;padding:3px 8px;font-size:10px;white-space:nowrap}.pill.pending{color:var(--gold);border-color:#e8c98766}.pill.rejected{color:var(--red);border-color:#ff9b9b66}.empty{padding:20px 0;color:var(--muted)}.notice{padding:12px 14px;border:1px solid #e8c98766;background:#e8c98710;color:#ead9ad;border-radius:11px;margin:16px 0;font-size:12px}.currencyLine{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}.currencyLine span{padding:4px 8px;background:#0a1423;border:1px solid var(--line);border-radius:8px;font-size:12px}.actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.actions select{width:auto;margin:0;padding:6px;font-size:11px}.smallBtn{padding:6px 8px;font-size:11px}.foot{padding:24px 0;color:var(--muted);font-size:11px}
+@media(max-width:900px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.layout{grid-template-columns:1fr}}
+@media(max-width:560px){main{padding:18px 12px}.gridform{grid-template-columns:1fr}.wide{grid-column:auto}.stat{padding:13px}.stat strong{font-size:23px}.auth{margin:35px auto}}
+</style></head>
+<body><main>
+<header class="top"><div><div class="brand">LEADORA <span>/ FINANCE</span></div><div class="muted">Private financial records · administrator access only</div></div><div class="toolbar"><a href="./admin.html">← Platform admin</a><span id="who" class="muted"></span><button id="logout" class="btn hide">Sign out</button></div></header>
+<section id="login" class="panel auth"><h1>Finance administration</h1><p class="muted">Sign in with the designated LEADORA platform administrator account.</p><label>Email</label><input id="email" type="email" autocomplete="username"><label>Password</label><input id="password" type="password" autocomplete="current-password"><button id="signin" class="btn primary">Sign in securely</button><div id="loginMsg" class="msg" role="status"></div></section>
+<section id="app" class="hide">
+<div class="notice"><b>Recordkeeping only.</b> This module does not hold, transfer, verify, or invest money. Enter only genuine people and transactions. Amounts remain pending until you verify them against bank evidence. Demo figures must never be presented as real funds.</div>
+<div class="stats">
+<div class="stat"><small>Registered investors</small><strong id="investorCount">0</strong><span>Records in this workspace</span></div>
+<div class="stat"><small>Tracked accounts</small><strong id="accountCount">0</strong><span>Bank, wallet or cash records</span></div>
+<div class="stat"><small>Confirmed incoming</small><strong id="incomingCount">0</strong><div id="incomingCurrencies" class="currencyLine"></div></div>
+<div class="stat"><small>Confirmed outgoing</small><strong id="outgoingCount">0</strong><div id="outgoingCurrencies" class="currencyLine"></div></div>
+</div>
+<div class="toolbar"><span class="muted">Last refreshed: <b id="updatedAt">—</b></span><button id="refresh" class="btn">Refresh records</button></div>
+<nav class="tabs">
+<button class="tab active" data-tab="overview">Overview</button><button class="tab" data-tab="investors">Investors</button><button class="tab" data-tab="accounts">Accounts</button><button class="tab" data-tab="commitments">Commitments</button><button class="tab" data-tab="transactions">Transactions</button><button class="tab" data-tab="audit">Audit log</button>
+</nav>
+<section id="view-overview" class="view active">
+<div class="layout">
+<div class="panel"><h2>Recent transactions</h2><div id="recentTransactions" class="empty">No records yet.</div></div>
+<div class="panel"><h2>Outstanding commitments</h2><div id="commitmentSummary" class="empty">No commitments recorded.</div></div>
+</div></section>
+<section id="view-investors" class="view"><div class="layout">
+<div class="panel"><h2>Add investor / participant</h2><form id="investorForm" class="gridform">
+<div><label>Full name *</label><input name="full_name" required maxlength="160"></div><div><label>Email</label><input name="email" type="email"></div><div><label>Organization</label><input name="organization"></div><div><label>Country</label><input name="country"></div><div><label>Type</label><select name="investor_type"><option value="individual">Individual</option><option value="company">Company</option><option value="fund">Fund</option><option value="other">Other</option></select></div><div><label>Status</label><select name="status"><option value="prospect">Prospect</option><option value="in_discussion">In discussion</option><option value="committed">Committed</option><option value="active">Active</option><option value="inactive">Inactive</option></select></div><div class="wide"><label>Notes</label><textarea name="notes"></textarea></div><div class="wide"><button class="btn primary">Save investor</button></div></form><div id="investorMsg" class="msg"></div></div>
+<div class="panel"><h2>Investor register</h2><div id="investorTable" class="tablewrap empty">No investors yet.</div></div>
+</div></section>
+<section id="view-accounts" class="view"><div class="layout">
+<div class="panel"><h2>Register an account</h2><form id="accountForm" class="gridform">
+<div><label>Bank / provider *</label><input name="institution" required></div><div><label>Account label *</label><input name="account_label" required placeholder="Operating account"></div><div><label>Account holder</label><input name="account_holder"></div><div><label>Type</label><select name="account_type"><option value="bank">Bank</option><option value="wallet">Wallet</option><option value="cash">Cash</option><option value="other">Other</option></select></div><div><label>Currency</label><select name="currency"><option>EUR</option><option>USD</option><option>GBP</option><option>DZD</option><option>CHF</option><option>CAD</option><option>other</option></select></div><div><label>Last 4 digits only</label><input name="last_four" maxlength="4" pattern="[0-9]{4}" placeholder="1234"></div><div class="wide"><label>Notes (never enter passwords or full card details)</label><textarea name="notes"></textarea></div><div class="wide"><button class="btn primary">Save account</button></div></form><div id="accountMsg" class="msg"></div></div>
+<div class="panel"><h2>Registered accounts</h2><div id="accountTable" class="tablewrap empty">No accounts yet.</div></div>
+</div></section>
+<section id="view-commitments" class="view"><div class="layout">
+<div class="panel"><h2>Record a commitment</h2><form id="commitmentForm" class="gridform">
+<div class="wide"><label>Investor *</label><select name="investor_id" id="commitInvestor" required></select></div><div><label>Amount *</label><input name="amount" type="number" min="0.01" step="0.01" required></div><div><label>Currency</label><select name="currency"><option>EUR</option><option>USD</option><option>GBP</option><option>DZD</option><option>CHF</option><option>CAD</option><option>other</option></select></div><div><label>Status</label><select name="status"><option value="pledged">Pledged</option><option value="partially_funded">Partially funded</option><option value="fulfilled">Fulfilled</option><option value="cancelled">Cancelled</option></select></div><div><label>Commitment date</label><input name="committed_on" type="date"></div><div><label>Due date</label><input name="due_on" type="date"></div><div class="wide"><label>Reference / notes</label><textarea name="notes"></textarea></div><div class="wide"><button class="btn primary">Save commitment</button></div></form><div id="commitmentMsg" class="msg"></div></div>
+<div class="panel"><h2>Commitment register</h2><div id="commitmentTable" class="tablewrap empty">No commitments yet.</div></div>
+</div></section>
+<section id="view-transactions" class="view"><div class="layout">
+<div class="panel"><h2>Record a transaction</h2><form id="transactionForm" class="gridform">
+<div><label>Direction</label><select name="direction"><option value="incoming">Incoming</option><option value="outgoing">Outgoing</option></select></div><div><label>Amount *</label><input name="amount" type="number" min="0.01" step="0.01" required></div><div><label>Currency</label><select name="currency"><option>EUR</option><option>USD</option><option>GBP</option><option>DZD</option><option>CHF</option><option>CAD</option><option>other</option></select></div><div><label>Status</label><select name="status"><option value="pending">Pending verification</option><option value="confirmed">Confirmed (evidence checked)</option><option value="rejected">Rejected</option></select></div><div><label>Account</label><select name="account_id" id="transactionAccount"></select></div><div><label>Related investor</label><select name="investor_id" id="transactionInvestor"></select></div><div><label>Transaction date *</label><input name="transaction_date" type="date" required></div><div><label>Counterparty</label><input name="counterparty"></div><div><label>Reference</label><input name="reference"></div><div><label>Proof URL (private document link)</label><input name="proof_url" type="url" placeholder="https://…"></div><div class="wide"><label>Notes</label><textarea name="notes"></textarea></div><div class="wide"><button class="btn primary">Save transaction</button></div></form><div id="transactionMsg" class="msg"></div></div>
+<div class="panel"><h2>Transaction register</h2><div id="transactionTable" class="tablewrap empty">No transactions yet.</div></div>
+</div></section>
+<section id="view-audit" class="view"><div class="panel"><h2>Immutable activity history</h2><p class="muted">Changes to investors, accounts, commitments and transactions are recorded automatically.</p><div id="auditTable" class="tablewrap empty">No activity yet.</div></div></section>
+</section><footer class="foot">LEADORA · Finance records · Admin-only access · Never use this page to represent unverified or simulated funds as real.</footer>
+</main>
+<script>
+(()=>{
+const URL='https://abqgzquhuzxggmgqgcdf.supabase.co';
+const KEY='sb_publishable_RmagoXH40PU_PJluswRFHg_xqY3jkPi';
+const db=window.supabase.createClient(URL,KEY),$=id=>document.getElementById(id);
+let session=null, investors=[], accounts=[], commitments=[], transactions=[];
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money=(v,c)=>new Intl.NumberFormat(undefined,{style:'currency',currency:c==='other'?'EUR':c,maximumFractionDigits:2}).format(Number(v||0))+(c==='other'?' (other)':'');
+const date=v=>v?new Date(v+'T00:00:00').toLocaleDateString():'—';
+const formObj=f=>Object.fromEntries(new FormData(f).entries());
+function msg(id,t){$(id).textContent=t}
+function showLogin(t=''){ $('login').classList.remove('hide');$('app').classList.add('hide');$('logout').classList.add('hide');$('who').textContent='';msg('loginMsg',t)}
+function showApp(){ $('login').classList.add('hide');$('app').classList.remove('hide');$('logout').classList.remove('hide');$('who').textContent=session?.user?.email||''}
+function table(headers,rows){if(!rows.length)return '<div class="empty">No records yet.</div>';return '<table><thead><tr>'+headers.map(h=>'<th>'+h+'</th>').join('')+'</tr></thead><tbody>'+rows.join('')+'</tbody></table>'}
+function pill(s){return '<span class="pill '+(s==='pending'||s==='pledged'?'pending':s==='rejected'||s==='cancelled'?'rejected':'')+'">'+esc(String(s).replaceAll('_',' '))+'</span>'}
+function selectOptions(items,placeholder){return '<option value="">'+placeholder+'</option>'+items.map(x=>'<option value="'+x.id+'">'+esc(x.full_name||x.account_label)+' — '+esc(x.organization||x.institution||'')+'</option>').join('')}
+function render(){
+ $('investorCount').textContent=investors.length;$('accountCount').textContent=accounts.length;
+ const totals=(dir)=>{const m={};transactions.filter(x=>x.direction===dir&&x.status==='confirmed').forEach(x=>m[x.currency]=(m[x.currency]||0)+Number(x.amount));return m};
+ const fmt=m=>Object.entries(m).map(([c,v])=>'<span>'+money(v,c)+'</span>').join('')||'<span>0.00</span>';
+ const incoming=totals('incoming'),outgoing=totals('outgoing');
+ $('incomingCount').textContent=Object.keys(incoming).length+' currencies';$('outgoingCount').textContent=Object.keys(outgoing).length+' currencies';
+ $('incomingCurrencies').innerHTML=fmt(incoming);$('outgoingCurrencies').innerHTML=fmt(outgoing);
+ $('investorTable').innerHTML=table(['Name','Organization','Email','Status'],investors.map(x=>'<tr><td><b>'+esc(x.full_name)+'</b><br><small>'+esc(x.country||'')+'</small></td><td>'+esc(x.organization||'—')+'</td><td>'+esc(x.email||'—')+'</td><td>'+pill(x.status)+'</td></tr>'));
+ $('accountTable').innerHTML=table(['Account','Provider','Type','Currency','Last 4'],accounts.map(x=>'<tr><td><b>'+esc(x.account_label)+'</b><br><small>'+esc(x.account_holder||'')+'</small></td><td>'+esc(x.institution)+'</td><td>'+esc(x.account_type)+'</td><td>'+esc(x.currency)+'</td><td>'+esc(x.last_four||'—')+'</td></tr>'));
+ $('commitmentTable').innerHTML=table(['Investor','Amount','Status','Due'],commitments.map(x=>'<tr><td>'+esc(x.finance_investors?.full_name||'—')+'</td><td><b>'+money(x.amount,x.currency)+'</b></td><td>'+pill(x.status)+'</td><td>'+date(x.due_on)+'</td></tr>'));
+ $('transactionTable').innerHTML=table(['Date','Direction','Amount','Counterparty','Status','Action'],transactions.map(x=>'<tr><td>'+date(x.transaction_date)+'</td><td>'+esc(x.direction)+'</td><td><b>'+money(x.amount,x.currency)+'</b></td><td>'+esc(x.counterparty||'—')+'</td><td>'+pill(x.status)+'</td><td><div class="actions"><select data-status="'+x.id+'"><option value="pending" '+(x.status==='pending'?'selected':'')+'>Pending</option><option value="confirmed" '+(x.status==='confirmed'?'selected':'')+'>Confirmed</option><option value="rejected" '+(x.status==='rejected'?'selected':'')+'>Rejected</option></select><button class="btn smallBtn" data-save-status="'+x.id+'">Save</button></div></td></tr>')));
+ $('recentTransactions').innerHTML=transactions.length?table(['Date','Type','Amount','Status'],transactions.slice(0,6).map(x=>'<tr><td>'+date(x.transaction_date)+'</td><td>'+esc(x.direction)+'</td><td>'+money(x.amount,x.currency)+'</td><td>'+pill(x.status)+'</td></tr>')):'<div class="empty">No transactions recorded yet.</div>';
+ $('commitmentSummary').innerHTML=commitments.length?table(['Investor','Commitment','Status'],commitments.slice(0,7).map(x=>'<tr><td>'+esc(x.finance_investors?.full_name||'—')+'</td><td>'+money(x.amount,x.currency)+'</td><td>'+pill(x.status)+'</td></tr>')):'<div class="empty">No commitments recorded yet.</div>';
+ $('commitInvestor').innerHTML=selectOptions(investors,'Select investor');$('transactionInvestor').innerHTML=selectOptions(investors,'No linked investor');$('transactionAccount').innerHTML=selectOptions(accounts,'No linked account');
+ $('updatedAt').textContent=new Date().toLocaleString();
+}
+async function load(){
+ const [i,a,c,t,l]=await Promise.all([
+ db.from('finance_investors').select('*').order('created_at',{ascending:false}),
+ db.from('finance_accounts').select('*').order('created_at',{ascending:false}),
+ db.from('finance_commitments').select('*,finance_investors(full_name)').order('created_at',{ascending:false}),
+ db.from('finance_transactions').select('*').order('transaction_date',{ascending:false}),
+ db.from('finance_audit_log').select('*').order('occurred_at',{ascending:false}).limit(100)
+ ]);
+ for(const [r,n] of [[i,'investors'],[a,'accounts'],[c,'commitments'],[t,'transactions'],[l,'audit log']])if(r.error)throw new Error('Could not load '+n+': '+r.error.message);
+ investors=i.data||[];accounts=a.data||[];commitments=c.data||[];transactions=t.data||[];
+ $('auditTable').innerHTML=table(['When','Table','Record','Action','Actor'],(l.data||[]).map(x=>'<tr><td>'+esc(new Date(x.occurred_at).toLocaleString())+'</td><td>'+esc(x.table_name)+'</td><td>'+esc(x.record_id.slice(0,8))+'…</td><td>'+pill(x.action)+'</td><td>'+esc(x.actor_id||'—')+'</td></tr>'));
+ render();
+}
+async function requireAdmin(s){
+ const {error}=await db.rpc('admin_dashboard_stats');
+ if(error)throw new Error('This account is not authorized for finance administration.');
+ session=s;showApp();await load();
+}
+$('signin').onclick=async()=>{msg('loginMsg','');const {data,error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){showLogin(error.message);return}try{await requireAdmin(data.session)}catch(e){await db.auth.signOut();showLogin(e.message)}};
+$('password').addEventListener('keydown',e=>{if(e.key==='Enter')$('signin').click()});
+$('logout').onclick=async()=>{await db.auth.signOut();session=null;showLogin()};
+$('refresh').onclick=async()=>{try{await load()}catch(e){alert(e.message)}};
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.view').forEach(x=>x.classList.toggle('active',x.id==='view-'+b.dataset.tab))});
+async function saveForm(id,tableName,target){const f=$(id);f.addEventListener('submit',async e=>{e.preventDefault();const data=formObj(f);Object.keys(data).forEach(k=>{if(data[k]==='')data[k]=null});if(data.amount!==undefined)data.amount=Number(data.amount);const {error}=await db.from(tableName).insert(data);if(error){msg(target,'Save failed: '+error.message);return}f.reset();msg(target,'Saved successfully.');await load()})}
+saveForm('investorForm','finance_investors','investorMsg');
+saveForm('accountForm','finance_accounts','accountMsg');
+saveForm('commitmentForm','finance_commitments','commitmentMsg');
+saveForm('transactionForm','finance_transactions','transactionMsg');
+$('transactionForm').elements.transaction_date.value=new Date().toISOString().slice(0,10);
+$('transactionTable').addEventListener('click',async e=>{const id=e.target.dataset.saveStatus;if(!id)return;const s=document.querySelector('[data-status="'+id+'"]').value;if(s==='confirmed'&&!confirm('Confirm only if you checked the transaction against reliable bank evidence. Continue?'))return;const {error}=await db.from('finance_transactions').update({status:s,updated_at:new Date().toISOString()}).eq('id',id);if(error){alert(error.message);return}await load()});
+db.auth.onAuthStateChange(async(event,s)=>{if(event==='SIGNED_OUT'){session=null;showLogin()}else if(event==='SIGNED_IN'&&s){try{await requireAdmin(s)}catch(e){await db.auth.signOut();showLogin(e.message)}}});
+db.auth.getSession().then(async({data})=>{if(data.session){try{await requireAdmin(data.session)}catch(e){await db.auth.signOut();showLogin(e.message)}}else showLogin()});
+})();
+</script></body></html>
