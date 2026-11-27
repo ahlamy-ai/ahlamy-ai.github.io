@@ -12,7 +12,7 @@ main{max-width:1160px;margin:auto;padding:28px 20px}.top{display:flex;justify-co
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body><main>
-<header class="top"><div><div class="brand">LEADORA / PLATFORM ADMIN</div><div class="muted">Restricted operations overview · aggregate data only</div></div><div class="toolbar"><span id="who" class="muted"></span><button id="refresh" class="btn hide">Refresh</button><button id="logout" class="btn hide">Sign out</button></div></header>
+<header class="top"><div><div class="brand">LEADORA / PLATFORM ADMIN</div><div class="muted">Restricted operations overview · aggregate data only</div></div><div class="toolbar"><span id="who" class="muted"></span><a class="btn" href="./finance.html">Finance &amp; Investors</a><button id="refresh" class="btn hide">Refresh</button><button id="logout" class="btn hide">Sign out</button></div></header>
 <section id="login" class="panel auth"><h1>Administrator sign in</h1><p class="muted">This area is restricted to the designated platform administrator. There is no public sign-up here.</p><label for="email">Account email</label><input id="email" type="email" autocomplete="username"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password"><button id="signin" class="btn primary">Sign in</button><div id="loginMsg" class="msg" role="status"></div></section>
 <section id="dashboard" class="hide">
 <div class="panel section"><div class="toolbar"><div><strong>Platform overview</strong><div id="generated" class="muted">Awaiting secure data…</div></div><span class="pill">SERVER-VERIFIED ADMIN</span></div></div>
