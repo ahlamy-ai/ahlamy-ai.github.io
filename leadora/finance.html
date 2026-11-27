@@ -16,7 +16,14 @@ main{max-width:1440px;margin:auto;padding:26px 20px}.top{display:flex;justify-co
 <header class="top"><div><div class="brand">LEADORA <span>/ FINANCE</span></div><div class="muted">Private financial records · administrator access only</div></div><div class="toolbar"><a href="./admin.html">← Platform admin</a><span id="who" class="muted"></span><button id="logout" class="btn hide">Sign out</button></div></header>
 <section id="login" class="panel auth"><h1>Finance administration</h1><p class="muted">Sign in with the designated LEADORA platform administrator account.</p><label>Email</label><input id="email" type="email" autocomplete="username"><label>Password</label><input id="password" type="password" autocomplete="current-password"><button id="signin" class="btn primary">Sign in securely</button><div id="loginMsg" class="msg" role="status"></div></section>
 <section id="app" class="hide">
-<div class="notice"><b>Recordkeeping only.</b> This module does not hold, transfer, verify, or invest money. Enter only genuine people and transactions. Amounts remain pending until you verify them against bank evidence. Demo figures must never be presented as real funds.</div>
+<div class="notice"><b>Recordkeeping only.</b> This module does not hold, transfer, verify, or invest money. Enter only genuine people and transactions. Amounts remain pending until you verify them against bank evidence. Strategic targets are displayed separately from verified balances. Never present targets as received funds or registered users.</div>
+<div class="panel" style="margin:18px 0;border-color:#7debd466;background:linear-gradient(110deg,#14332f,#14233a)">
+<div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
+<div><div style="font-size:11px;letter-spacing:.12em;color:var(--mint);font-weight:900">LEADORA GROWTH TARGETS</div><h2 style="margin:5px 0">Funding & community milestones</h2><div class="muted">Strategic targets — not funds received or users currently registered.</div></div>
+<div style="display:flex;gap:24px;flex-wrap:wrap">
+<div><small>Funding target</small><div style="font-size:30px;font-weight:900;color:var(--mint)">€100,000</div><small>Target capital</small></div>
+<div><small>Community target</small><div style="font-size:30px;font-weight:900;color:var(--mint)">1,000</div><small>Target participants</small></div>
+</div></div></div>
 <div class="stats">
 <div class="stat"><small>Registered investors</small><strong id="investorCount">0</strong><span>Records in this workspace</span></div>
 <div class="stat"><small>Tracked accounts</small><strong id="accountCount">0</strong><span>Bank, wallet or cash records</span></div>
