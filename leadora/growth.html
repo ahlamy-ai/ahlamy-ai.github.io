@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#080d18">
+<title>LEADORA — Growth Engine</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{color-scheme:dark;--bg:#080d18;--panel:#111d30;--line:#2a3d58;--ink:#f5f8ff;--muted:#a1afc5;--mint:#7debd4;--blue:#9bb7ff;--gold:#e8c987;--red:#ff9b9b}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 85% 0%,#1b3557 0,transparent 35%),var(--bg);color:var(--ink);font:14px/1.55 Inter,system-ui,sans-serif}
+main{max-width:1400px;margin:auto;padding:26px 20px}.top{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:18px}.brand{font-weight:900;letter-spacing:.13em}.brand span{color:var(--mint)}.muted,small{color:var(--muted)}a{color:var(--blue);text-decoration:none}.btn{padding:10px 14px;border-radius:9px;border:1px solid var(--line);background:#1b2d48;color:var(--ink);font-weight:750;cursor:pointer}.primary{background:linear-gradient(110deg,var(--blue),var(--mint));color:#07111c;border:0}.hide{display:none!important}.panel,.stat{background:linear-gradient(145deg,#14233a,#0d1727);border:1px solid var(--line);border-radius:15px;padding:18px}.auth{max-width:440px;margin:70px auto}.auth h1{margin-top:0}input,select,textarea{width:100%;padding:11px;margin:5px 0 12px;background:#091321;color:var(--ink);border:1px solid var(--line);border-radius:9px;font:inherit}textarea{min-height:90px;resize:vertical}label{display:block;color:var(--muted);font-size:12px;font-weight:700}.msg{margin-top:12px;white-space:pre-wrap;color:var(--gold)}.toolbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.toolbar .muted{margin-right:auto}.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:20px 0}.stat small{display:block;font-weight:700}.stat strong{display:block;font-size:27px;margin-top:8px}.layout{display:grid;grid-template-columns:1fr 1fr;gap:14px}.panel h2{font-size:17px;margin:0 0 13px}.gridform{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px}.wide{grid-column:1/-1}.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:760px}th,td{text-align:left;padding:10px 9px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em}.pill{display:inline-block;border:1px solid #7debd466;color:var(--mint);border-radius:30px;padding:3px 8px;font-size:11px}.notice{border:1px solid #d8b56a66;background:#2b2518;color:#f0d99d;border-radius:10px;padding:12px;margin:16px 0}.rowactions{display:flex;gap:6px;flex-wrap:wrap}.small{padding:6px 9px;font-size:12px}.empty{padding:18px;text-align:center;color:var(--muted)}.tabs{display:flex;gap:7px;flex-wrap:wrap;margin:18px 0}.tab{padding:9px 13px;border-radius:9px;border:1px solid var(--line);background:#101c2e;color:var(--muted);cursor:pointer}.tab.active{color:var(--ink);border-color:var(--mint);background:#14332f}.view{display:none}.view.active{display:block}.foot{padding:24px 0;color:var(--muted);font-size:12px}
+@media(max-width:900px){.stats{grid-template-columns:repeat(3,minmax(0,1fr))}.layout{grid-template-columns:1fr}}@media(max-width:600px){main{padding:18px 12px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.stat{padding:13px}.stat strong{font-size:23px}.gridform{grid-template-columns:1fr}.wide{grid-column:auto}}
+</style>
+</head>
+<body><main>
+<header class="top"><div><div class="brand">LEADORA / <span>GROWTH ENGINE</span></div><div class="muted">B2B pipeline · Lead qualification · Outreach drafts</div></div><div class="toolbar"><a class="btn" href="./admin.html">Platform admin</a><a class="btn" href="./finance.html">Finance</a><span id="who" class="muted"></span><button id="refresh" class="btn hide">Refresh</button><button id="logout" class="btn hide">Sign out</button></div></header>
+<section id="login" class="panel auth"><h1>Administrator sign in</h1><p class="muted">Restricted to the designated LEADORA platform administrator.</p><label for="email">Account email</label><input id="email" type="email" autocomplete="username"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password"><button id="signin" class="btn primary">Sign in</button><div id="loginMsg" class="msg" role="status"></div></section>
+<section id="app" class="hide">
+<div class="notice"><b>Human-approved outreach only.</b> This first release stores prospect records and prepares editable drafts. It does not scrape websites, send emails, or claim a prospect is a customer. Only contact people through an appropriate lawful basis, respect opt-outs, and review every message before sending.</div>
+<div class="stats">
+<div class="stat"><small>Total prospects</small><strong id="sTotal">0</strong></div>
+<div class="stat"><small>Qualified</small><strong id="sQualified">0</strong></div>
+<div class="stat"><small>Drafts ready</small><strong id="sDrafts">0</strong></div>
+<div class="stat"><small>Contacted</small><strong id="sContacted">0</strong></div>
+<div class="stat"><small>Won customers</small><strong id="sWon">0</strong></div>
+</div>
+<div class="tabs"><button class="tab active" data-tab="pipeline">Pipeline</button><button class="tab" data-tab="add">Add prospect</button><button class="tab" data-tab="drafts">Outreach drafts</button></div>
+<section id="view-pipeline" class="view active panel">
+<div class="toolbar"><div><h2>Prospect pipeline</h2><div class="muted">Only real prospects you have sourced and entered are shown.</div></div><select id="filterStatus" style="max-width:190px;margin:0"><option value="">All statuses</option><option>new</option><option>researching</option><option>qualified</option><option>draft_ready</option><option>approved</option><option>contacted</option><option>replied</option><option>meeting</option><option>customer</option><option>lost</option><option>do_not_contact</option></select><button id="exportCsv" class="btn">Export CSV</button></div>
+<div class="tablewrap" style="margin-top:12px"><table><thead><tr><th>Company</th><th>Market</th><th>Contact</th><th>Fit</th><th>Status</th><th>Added</th><th>Actions</th></tr></thead><tbody id="leadRows"><tr><td colspan="7" class="empty">No prospects yet. Add your first verified company.</td></tr></tbody></table></div>
+</section>
+<section id="view-add" class="view panel">
+<h2>Add a verified B2B prospect</h2><p class="muted">Use company information you have permission to use. Do not invent contact details.</p>
+<form id="leadForm" class="gridform">
+<div><label>Company name *</label><input name="company_name" required maxlength="160"></div>
+<div><label>Website</label><input name="website" type="url" placeholder="https://example.com"></div>
+<div><label>Country</label><input name="country" placeholder="United Kingdom"></div>
+<div><label>Industry</label><input name="industry" placeholder="Consulting, hospitality, agency…"></div>
+<div><label>Contact person</label><input name="contact_name"></div>
+<div><label>Business email</label><input name="contact_email" type="email"></div>
+<div><label>Source</label><select name="source"><option value="manual">Manually researched</option><option value="inbound">Inbound inquiry</option><option value="referral">Referral</option><option value="public_directory">Public business directory</option><option value="event">Business event</option></select></div>
+<div><label>Source URL</label><input name="source_url" type="url" placeholder="https://source-page…"></div>
+<div><label>Fit score (0–100)</label><input name="fit_score" type="number" min="0" max="100" value="50"></div>
+<div><label>Contact basis</label><select name="contact_basis"><option value="">Not assessed</option><option value="inbound_request">They requested contact</option><option value="referral">Referral / introduction</option><option value="existing_relationship">Existing business relationship</option><option value="public_business_contact">Public business contact — review local law first</option></select></div>
+<div class="wide"><label>Research notes</label><textarea name="notes" placeholder="What the company does, why LEADORA may be relevant, and evidence/source notes…"></textarea></div>
+<div class="wide"><button class="btn primary" type="submit">Save prospect</button><div id="leadMsg" class="msg"></div></div>
+</form>
+</section>
+<section id="view-drafts" class="view panel">
+<div class="toolbar"><div><h2>Outreach drafts</h2><div class="muted">Drafts are not sent. Approval is recorded separately.</div></div><button id="refreshDrafts" class="btn">Refresh</button></div>
+<div class="layout" style="margin-top:12px">
+<div><label>Select prospect</label><select id="draftLead"></select><label>Subject</label><input id="draftSubject" maxlength="180"><label>Message</label><textarea id="draftBody" style="min-height:250px"></textarea><div class="toolbar"><button id="makeDraft" class="btn">Create tailored draft</button><button id="saveDraft" class="btn primary">Save draft</button></div><div id="draftMsg" class="msg"></div></div>
+<div><h2>Saved drafts</h2><div id="draftRows" class="tablewrap"><div class="empty">No drafts yet.</div></div></div>
+</div>
+</section>
+</section>
+<footer class="foot">LEADORA · Growth Engine v0.1 · Admin-only · No automated sending enabled</footer>
+</main>
+<script>
+(()=>{
+const URL='https://abqgzquhuzxggmgqgcdf.supabase.co';
+const KEY='sb_publishable_RmagoXH40PU_PJluswRFHg_xqY3jkPi';
+const db=window.supabase.createClient(URL,KEY),$=id=>document.getElementById(id);
+let leads=[], drafts=[];
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const showLogin=m=>{$('login').classList.remove('hide');$('app').classList.add('hide');$('who').textContent='';$('refresh').classList.add('hide');$('logout').classList.add('hide');if(m)$('loginMsg').textContent=m};
+const showApp=()=>{$('login').classList.add('hide');$('app').classList.remove('hide');$('refresh').classList.remove('hide');$('logout').classList.remove('hide')};
+const date=v=>v?new Date(v).toLocaleDateString():'—';
+const pill=v=>'<span class="pill">'+esc(v||'new')+'</span>';
+function csv(rows){const cols=['company_name','website','country','industry','contact_name','contact_email','source','source_url','fit_score','status','contact_basis','created_at'];const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';return [cols.join(','),...rows.map(r=>cols.map(k=>q(r[k])).join(','))].join('\r\n')}
+function render(){
+ $('sTotal').textContent=leads.length;$('sQualified').textContent=leads.filter(x=>['qualified','draft_ready','approved','contacted','replied','meeting','customer'].includes(x.status)).length;
+ $('sDrafts').textContent=drafts.filter(x=>x.status==='draft').length;$('sContacted').textContent=leads.filter(x=>['contacted','replied','meeting'].includes(x.status)).length;$('sWon').textContent=leads.filter(x=>x.status==='customer').length;
+ const filter=$('filterStatus').value;const shown=leads.filter(x=>!filter||x.status===filter);
+ $('leadRows').innerHTML=shown.length?shown.map(x=>'<tr><td><b>'+esc(x.company_name)+'</b><br><small>'+esc(x.website||'')+'</small></td><td>'+esc([x.industry,x.country].filter(Boolean).join(' · ')||'—')+'</td><td>'+esc(x.contact_name||'—')+'<br><small>'+esc(x.contact_email||'')+'</small></td><td>'+x.fit_score+'/100</td><td><select data-lead-status="'+x.id+'" style="min-width:130px;margin:0">'+['new','researching','qualified','draft_ready','approved','contacted','replied','meeting','customer','lost','do_not_contact'].map(s=>'<option value="'+s+'" '+(x.status===s?'selected':'')+'>'+s.replaceAll('_',' ')+'</option>').join('')+'</select></td><td>'+date(x.created_at)+'</td><td><div class="rowactions"><button class="btn small" data-use="'+x.id+'">Draft</button><button class="btn small" data-optout="'+x.id+'">Do not contact</button></div></td></tr>').join(''):'<tr><td colspan="7" class="empty">No prospects in this view.</td></tr>';
+ $('draftLead').innerHTML=leads.filter(x=>!x.opt_out&&x.status!=='do_not_contact').map(x=>'<option value="'+x.id+'">'+esc(x.company_name)+'</option>').join('')||'<option value="">No eligible prospects</option>';
+ $('draftRows').innerHTML=drafts.length?'<table><thead><tr><th>Company</th><th>Subject</th><th>Status</th><th>Created</th></tr></thead><tbody>'+drafts.map(d=>{const l=leads.find(x=>x.id===d.lead_id);return '<tr><td>'+esc(l?.company_name||'Deleted prospect')+'</td><td>'+esc(d.subject||'(no subject)')+'</td><td>'+pill(d.status)+'</td><td>'+date(d.created_at)+'</td></tr>'}).join('')+'</tbody></table>':'<div class="empty">No drafts yet.</div>';
+}
+async function load(){
+ const [a,b]=await Promise.all([db.from('growth_leads').select('*').order('created_at',{ascending:false}),db.from('growth_outreach').select('*').order('created_at',{ascending:false})]);
+ if(a.error)throw a.error;if(b.error)throw b.error;leads=a.data||[];drafts=b.data||[];render();
+}
+async function authorize(session){const {error}=await db.rpc('admin_dashboard_stats');if(error)throw new Error('This account is not authorized for LEADORA growth administration.');$('who').textContent=session.user.email||'Administrator';showApp();await load()}
+$('signin').onclick=async()=>{const {data,error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){showLogin(error.message);return}try{await authorize(data.session)}catch(e){await db.auth.signOut();showLogin(e.message)}};
+$('password').addEventListener('keydown',e=>{if(e.key==='Enter')$('signin').click()});
+$('logout').onclick=async()=>{await db.auth.signOut();showLogin()};
+$('refresh').onclick=async()=>{try{await load()}catch(e){alert(e.message)}};
+$('refreshDrafts').onclick=async()=>{try{await load()}catch(e){alert(e.message)}};
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.view').forEach(x=>x.classList.toggle('active',x.id==='view-'+b.dataset.tab))});
+$('filterStatus').onchange=render;
+$('leadForm').onsubmit=async e=>{e.preventDefault();const data=Object.fromEntries(new FormData(e.currentTarget).entries());data.fit_score=Number(data.fit_score||0);Object.keys(data).forEach(k=>{if(data[k]==='')data[k]=null});const {error}=await db.from('growth_leads').insert(data);if(error){$('leadMsg').textContent='Save failed: '+error.message;return}e.currentTarget.reset();$('leadMsg').textContent='Prospect saved.';await load()};
+$('leadRows').onclick=async e=>{const use=e.target.dataset.use;if(use){$('draftLead').value=use;document.querySelector('[data-tab="drafts"]').click();buildDraft();return}const id=e.target.dataset.optout;if(id){if(!confirm('Mark this record as do-not-contact?'))return;const {error}=await db.from('growth_leads').update({opt_out:true,status:'do_not_contact',updated_at:new Date().toISOString()}).eq('id',id);if(error)alert(error.message);else await load()}};
+$('leadRows').onchange=async e=>{const id=e.target.dataset.leadStatus;if(!id)return;const {error}=await db.from('growth_leads').update({status:e.target.value,updated_at:new Date().toISOString()}).eq('id',id);if(error)alert(error.message);else await load()};
+function buildDraft(){const l=leads.find(x=>x.id===$('draftLead').value);if(!l)return;const company=l.company_name;const industry=l.industry||'your team';$('draftSubject').value='A simpler way to manage incoming enquiries at '+company;$('draftBody').value='Hello '+(l.contact_name||'there')+',\n\nI came across '+company+(l.website?' ('+l.website+')':'')+' and thought LEADORA may be relevant to the way your team manages incoming enquiries.\n\nLEADORA helps businesses organise leads, keep follow-ups visible and coordinate replies across their workflow. For a '+industry+' business, this can make it easier to keep every enquiry moving to a clear next step.\n\nWould you be open to a brief look at the platform to see whether it fits your current process?\n\nBest regards,\nLEADORA Team\nhttps://ahlamy-ai.github.io/leadora/\n\nIf this is not relevant, reply and we will not contact you again.'}
+$('makeDraft').onclick=buildDraft;
+$('draftLead').onchange=buildDraft;
+$('saveDraft').onclick=async()=>{const id=$('draftLead').value;if(!id){$('draftMsg').textContent='Add a prospect first.';return}const body=$('draftBody').value.trim();if(!body){$('draftMsg').textContent='Write a message first.';return}const {error}=await db.from('growth_outreach').insert({lead_id:id,channel:'email',subject:$('draftSubject').value.trim(),body,status:'draft'});if(error){$('draftMsg').textContent='Save failed: '+error.message;return}$('draftMsg').textContent='Draft saved. It has not been sent.';await load()};
+$('exportCsv').onclick=()=>{const blob=new Blob([csv(leads)],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='leadora-prospects.csv';a.click();URL.revokeObjectURL(url)};
+db.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT')showLogin()});
+db.auth.getSession().then(async({data})=>{if(data.session){try{await authorize(data.session)}catch(e){await db.auth.signOut();showLogin(e.message)}}else showLogin()});
+})();
+</script></body></html>
