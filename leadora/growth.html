@@ -58,9 +58,9 @@ main{max-width:1400px;margin:auto;padding:26px 20px}.top{display:flex;justify-co
 </main>
 <script>
 (()=>{
-const URL='https://abqgzquhuzxggmgqgcdf.supabase.co';
+const SUPABASE_URL='https://abqgzquhuzxggmgqgcdf.supabase.co';
 const KEY='sb_publishable_RmagoXH40PU_PJluswRFHg_xqY3jkPi';
-const db=window.supabase.createClient(URL,KEY),$=id=>document.getElementById(id);
+const db=window.supabase.createClient(SUPABASE_URL,KEY),$=id=>document.getElementById(id);
 let leads=[], drafts=[];
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const showLogin=m=>{$('login').classList.remove('hide');$('app').classList.add('hide');$('who').textContent='';$('refresh').classList.add('hide');$('logout').classList.add('hide');if(m)$('loginMsg').textContent=m};
@@ -95,7 +95,7 @@ function buildDraft(){const l=leads.find(x=>x.id===$('draftLead').value);if(!l)r
 $('makeDraft').onclick=buildDraft;
 $('draftLead').onchange=buildDraft;
 $('saveDraft').onclick=async()=>{const id=$('draftLead').value;if(!id){$('draftMsg').textContent='Add a prospect first.';return}const body=$('draftBody').value.trim();if(!body){$('draftMsg').textContent='Write a message first.';return}const {error}=await db.from('growth_outreach').insert({lead_id:id,channel:'email',subject:$('draftSubject').value.trim(),body,status:'draft'});if(error){$('draftMsg').textContent='Save failed: '+error.message;return}$('draftMsg').textContent='Draft saved. It has not been sent.';await load()};
-$('exportCsv').onclick=()=>{const blob=new Blob([csv(leads)],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='leadora-prospects.csv';a.click();URL.revokeObjectURL(url)};
+$('exportCsv').onclick=()=>{const blob=new Blob([csv(leads)],{type:'text/csv;charset=utf-8'}),url=window.URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='leadora-prospects.csv';a.click();window.URL.revokeObjectURL(url)};
 db.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT')showLogin()});
 db.auth.getSession().then(async({data})=>{if(data.session){try{await authorize(data.session)}catch(e){await db.auth.signOut();showLogin(e.message)}}else showLogin()});
 })();
